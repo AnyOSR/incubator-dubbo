@@ -103,7 +103,7 @@ public class ExtensionLoaderTest {
 
     @Test
     public void test_getDefaultExtension() throws Exception {
-        SimpleExt ext = ExtensionLoader.getExtensionLoader(SimpleExt.class).getDefaultExtension();
+        SimpleExt ext = ExtensionLoader.getExtensionLoader(SimpleExt.class).getAdaptiveExtension();
         Ext2 ext2 = ExtensionLoader.getExtensionLoader(Ext2.class).getDefaultExtension();
         assertThat(ext, instanceOf(SimpleExtImpl1.class));
 

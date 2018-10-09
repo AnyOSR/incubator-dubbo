@@ -33,10 +33,13 @@ import java.util.Set;
  */
 public class InternalThreadLocal<V> {
 
+    //这就是个定值啊！整个项目只有这个类调用InternalThreadLocalMap.nextVariableIndex()
+    //一般情况下为0，直接写0不行？
     private static final int variablesToRemoveIndex = InternalThreadLocalMap.nextVariableIndex();
 
     private final int index;
 
+    //当前InternalThreadLocal的索引
     public InternalThreadLocal() {
         index = InternalThreadLocalMap.nextVariableIndex();
     }
@@ -48,18 +51,24 @@ public class InternalThreadLocal<V> {
      */
     @SuppressWarnings("unchecked")
     public static void removeAll() {
+
+        //获取当前线程的线程局部变量
         InternalThreadLocalMap threadLocalMap = InternalThreadLocalMap.getIfSet();
         if (threadLocalMap == null) {
             return;
         }
 
         try {
+            //获取应该删除的index集合(或者说设置过的？) 双重映射啊
             Object v = threadLocalMap.indexedVariable(variablesToRemoveIndex);
             if (v != null && v != InternalThreadLocalMap.UNSET) {
                 Set<InternalThreadLocal<?>> variablesToRemove = (Set<InternalThreadLocal<?>>) v;
-                InternalThreadLocal<?>[] variablesToRemoveArray =
-                        variablesToRemove.toArray(new InternalThreadLocal[variablesToRemove.size()]);
+                //toArray之后，只要数组的长度足够，引用不会变
+                //那toArray有何意义？直接遍历得到的Set<InternalThreadLocal<?>>不一样吗？
+                InternalThreadLocal<?>[] variablesToRemoveArray = variablesToRemove.toArray(new InternalThreadLocal[variablesToRemove.size()]);
                 for (InternalThreadLocal<?> tlv : variablesToRemoveArray) {
+                    //threadLocalMap是当前线程的局部变量
+                    //tlv是threadLocalMap里索引为variablesToRemoveIndex的Set<InternalThreadLocal<?>>元素集合里面的元素
                     tlv.remove(threadLocalMap);
                 }
             }
@@ -71,6 +80,7 @@ public class InternalThreadLocal<V> {
     /**
      * Returns the number of thread local variables bound to the current thread.
      */
+    //返回设置过的元素个数
     public static int size() {
         InternalThreadLocalMap threadLocalMap = InternalThreadLocalMap.getIfSet();
         if (threadLocalMap == null) {
@@ -84,6 +94,7 @@ public class InternalThreadLocal<V> {
         InternalThreadLocalMap.destroy();
     }
 
+    //将某一个index的元素添加到 待删除集合
     @SuppressWarnings("unchecked")
     private static void addToVariablesToRemove(InternalThreadLocalMap threadLocalMap, InternalThreadLocal<?> variable) {
         Object v = threadLocalMap.indexedVariable(variablesToRemoveIndex);
@@ -98,9 +109,15 @@ public class InternalThreadLocal<V> {
         variablesToRemove.add(variable);
     }
 
+    //将threadLocalMap里
+    // index为variablesToRemoveIndex的Set<InternalThreadLocal<?>>集合
+    // 里面的variable
+    // remove掉
     @SuppressWarnings("unchecked")
     private static void removeFromVariablesToRemove(InternalThreadLocalMap threadLocalMap, InternalThreadLocal<?> variable) {
 
+        //index为variablesToRemoveIndex放的肯定是一个Set<InternalThreadLocal<?>>？
+        //表示需要删掉的元素的index？
         Object v = threadLocalMap.indexedVariable(variablesToRemoveIndex);
 
         if (v == InternalThreadLocalMap.UNSET || v == null) {
@@ -171,9 +188,12 @@ public class InternalThreadLocal<V> {
             return;
         }
 
+        //首先将threadLocalMap索引为this.index的元素删除掉
         Object v = threadLocalMap.removeIndexedVariable(index);
+        //然后把threadLocalMap索引为variablesToRemoveIndex出的Set<InternalThreadLocal>集合里面的this删除掉，保证
         removeFromVariablesToRemove(threadLocalMap, this);
 
+        //删除成功后调用onRemoval
         if (v != InternalThreadLocalMap.UNSET) {
             try {
                 onRemoval((V) v);

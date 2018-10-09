@@ -25,6 +25,8 @@ import com.alibaba.dubbo.common.extension.SPI;
  */
 public class SpiExtensionFactory implements ExtensionFactory {
 
+    //spi获取
+    //根据type获取对应的ExtensionLoader，然后获取其AdaptiveExtension(对应type的AdaptiveExtension)
     @Override
     public <T> T getExtension(Class<T> type, String name) {
         if (type.isInterface() && type.isAnnotationPresent(SPI.class)) {

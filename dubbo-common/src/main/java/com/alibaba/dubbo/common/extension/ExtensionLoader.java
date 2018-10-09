@@ -56,6 +56,10 @@ import java.util.regex.Pattern;
  * @see com.alibaba.dubbo.common.extension.Adaptive
  * @see com.alibaba.dubbo.common.extension.Activate
  */
+//getAdaptiveExtension
+//getActivateExtension
+//getDefaultExtension
+//getExtension
 public class ExtensionLoader<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(ExtensionLoader.class);
@@ -74,17 +78,24 @@ public class ExtensionLoader<T> {
 
     private final ConcurrentMap<String, Holder<Object>> cachedInstances = new ConcurrentHashMap<String, Holder<Object>>();
 
+    //@SPI默认实现类
     private String cachedDefaultName;
     private volatile Throwable createAdaptiveInstanceError;
     private final Holder<Object> cachedAdaptiveInstance = new Holder<Object>();
 
-    //实现类相关
-    private volatile Class<?> cachedAdaptiveClass = null;     //type的所有实现类中，只能有一个Adaptive注解
-    private Set<Class<?>> cachedWrapperClasses;
-    private final Map<String, Activate> cachedActivates = new ConcurrentHashMap<String, Activate>();
+    //实现类相关  以下三种相互独立
+    //每一个实现类只能属于其中的一种
+    //要么是Adaptive，要么是wrapper，要么是剩下的
+    //====================================================
+    private volatile Class<?> cachedAdaptiveClass = null;     //type的所有实现类中，只能有一个Adaptive注解 适配器类 动态生成
+
+    private Set<Class<?>> cachedWrapperClasses;               // wrapper
+
+    private final Map<String, Activate> cachedActivates = new ConcurrentHashMap<String, Activate>();   //Activate注解
     private final ConcurrentMap<Class<?>, String> cachedNames = new ConcurrentHashMap<Class<?>, String>();
-    //type的所有实现类
-    private final Holder<Map<String, Class<?>>> cachedClasses = new Holder<Map<String, Class<?>>>();
+    private final Holder<Map<String, Class<?>>> cachedClasses = new Holder<Map<String, Class<?>>>();   //type的所有实现类
+    //====================================================
+
 
     private Map<String, IllegalStateException> exceptions = new ConcurrentHashMap<String, IllegalStateException>();
 
@@ -94,9 +105,12 @@ public class ExtensionLoader<T> {
         // 其objectFactory都是由type为ExtensionFactory.class的ExtensionLoader实例来创建完成的
         // ExtensionFactory.class(key)     (ExtensionFactory.class(type) null(objectFactory))(value)
 
-        //如果一个类不为ExtensionFactory.class,则尝试新建任何ExtensionLoader之前，都会去检查ExtensionFactory.class对应的实现类是否已经加载
+        //如果一个类不为ExtensionFactory.class,则尝试新建任何ExtensionLoader之前，都会去检查ExtensionFactory.class对应的AdaptiveExtension是否已经加载
         //并将得到的AdaptiveExtension赋值给另一个type不为ExtensionFactory.class的ExtensionLoader.objectFactory
         //那是不是所有接口的objectFactory刚开始都是一样的？后来又改变的时机吗？
+        //将ExtensionFactory对应的 适配器类 赋值给当前的objectFactory
+        //为什么objectFactory一开始都是AdaptiveExtensionFactory的实例？
+        //因为objectFactory只是一种获取extension的方式，到现在为止，要不从spring上下文中获取，要不从dubbo spi中获取，但这儿有必要这样实现吗？
         objectFactory = (type == ExtensionFactory.class ? null : ExtensionLoader.getExtensionLoader(ExtensionFactory.class).getAdaptiveExtension());
     }
 
@@ -298,13 +312,17 @@ public class ExtensionLoader<T> {
      * Find the extension with the given name. If the specified name is not found, then {@link IllegalStateException}
      * will be thrown.
      */
+    //根据指定的名字获取特定的extension
+    //比jdk spi要好
     @SuppressWarnings("unchecked")
     public T getExtension(String name) {
         if (name == null || name.length() == 0)
             throw new IllegalArgumentException("Extension name == null");
+        // 如果name为true，则获取默认Extension
         if ("true".equals(name)) {
             return getDefaultExtension();
         }
+        //否则，先从缓存中获取
         Holder<Object> holder = cachedInstances.get(name);
         if (holder == null) {
             cachedInstances.putIfAbsent(name, new Holder<Object>());
@@ -315,6 +333,7 @@ public class ExtensionLoader<T> {
             synchronized (holder) {
                 instance = holder.get();
                 if (instance == null) {
+                    //创建新的Extension
                     instance = createExtension(name);
                     holder.set(instance);
                 }
@@ -327,11 +346,16 @@ public class ExtensionLoader<T> {
      * Return default extension, return <code>null</code> if it's not configured.
      */
     public T getDefaultExtension() {
+        //加载所有的ExtensionClasses
         getExtensionClasses();
+
+        //没有获取到默认的名字则返回
+        //@SPI注解后面跟的就是默认的名字
         if (null == cachedDefaultName || cachedDefaultName.length() == 0
                 || "true".equals(cachedDefaultName)) {
             return null;
         }
+        //根据默认的名字去获取Extension
         return getExtension(cachedDefaultName);
     }
 
@@ -441,6 +465,7 @@ public class ExtensionLoader<T> {
         }
     }
 
+    //获取适配的Extension
     @SuppressWarnings("unchecked")
     public T getAdaptiveExtension() {
         //从缓存中获取实例
@@ -497,17 +522,22 @@ public class ExtensionLoader<T> {
 
     @SuppressWarnings("unchecked")
     private T createExtension(String name) {
+        //根据name查找某个实现类
         Class<?> clazz = getExtensionClasses().get(name);
         if (clazz == null) {
             throw findException(name);
         }
         try {
+            //从缓存中获取实例
             T instance = (T) EXTENSION_INSTANCES.get(clazz);
-            if (instance == null) {
+            if (instance == null) {        //缓存中没有则新建
                 EXTENSION_INSTANCES.putIfAbsent(clazz, clazz.newInstance());
                 instance = (T) EXTENSION_INSTANCES.get(clazz);
             }
+            //注入必要的依赖
             injectExtension(instance);
+
+            //wrapper包装，有点类似于装饰器模式
             Set<Class<?>> wrapperClasses = cachedWrapperClasses;
             if (wrapperClasses != null && !wrapperClasses.isEmpty()) {
                 for (Class<?> wrapperClass : wrapperClasses) {
@@ -523,6 +553,9 @@ public class ExtensionLoader<T> {
 
     private T injectExtension(T instance) {
         try {
+            //如果objectFactory不为null
+            //ExtensionFactory对应的ExtensionLoader,其objectFactory为null
+            //其余的type对应的ExtensionLoader，其objectFactory为AdaptiveExtensionFactory的实例
             if (objectFactory != null) {
                 //遍历以set开头、参数为1个且修饰符为public的方法
                 for (Method method : instance.getClass().getMethods()) {
@@ -783,25 +816,28 @@ public class ExtensionLoader<T> {
         }
     }
 
+    //获取适配的ExtensionClass
     private Class<?> getAdaptiveExtensionClass() {
         //加载所有实现类
         getExtensionClasses();
-        //如果没有带Adaptive注解的实现类
+        //如果有带Adaptive注解的实现类
         if (cachedAdaptiveClass != null) {
             return cachedAdaptiveClass;
         }
+        //如果没有带Adaptive注解的实现类，创建一个
         return cachedAdaptiveClass = createAdaptiveExtensionClass();
     }
 
     //调用getAdaptiveExtension的时候，回加载所有实现类，如果所有的实现类都没有Adaptive注解，
     //则调用createAdaptiveExtensionClass来创建一个AdaptiveExtension，
     //而调用createAdaptiveExtensionClass的时候，又会调用getAdaptiveExtension()方法，来加载compile的实现
-    //如果Compiler的实现类没有@Adaptive注解，cachedAdaptiveClass一直得不到设置，getAdaptiveExtensionClass方法一直不能返回，又会继续走下去
+    //如果Compiler的实现类没有@Adaptive注解，cachedAdaptiveClass一直得不到设置，getAdaptiveExtensionClass方法一直不能返回，又会继续走下去，无限循环
     private Class<?> createAdaptiveExtensionClass() {
         //创建AdaptiveExtensionCode
         String code = createAdaptiveExtensionClassCode();
         ClassLoader classLoader = findClassLoader();
         //获取Compiler的实现
+        //Compiler必须有一个实现是带Adaptive注解的
         //AdaptiveCompiler是Compiler的一个实现类，且具有Adaptive注解，不会死循环
         com.alibaba.dubbo.common.compiler.Compiler compiler = ExtensionLoader.getExtensionLoader(com.alibaba.dubbo.common.compiler.Compiler.class).getAdaptiveExtension();
         //compile

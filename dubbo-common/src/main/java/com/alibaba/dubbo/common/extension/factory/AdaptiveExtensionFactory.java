@@ -27,9 +27,16 @@ import java.util.List;
 /**
  * AdaptiveExtensionFactory
  */
+
+//怪不得加载任何一个type的ExtensionLoader之前都会先去尝试创建type为ExtensionFactory的ExtensionLoader
+//且调用type为ExtensionFactory的ExtensionLoader的getAdaptiveExtension方法(且当前类有Adaptive注解)，且将获得的ExtensionFactory赋值给
+//ExtensionFactory类的SPI注解没有写值
+//适配器类
 @Adaptive
 public class AdaptiveExtensionFactory implements ExtensionFactory {
 
+    //factories中保存了所有的ExtensionFactory的配置的实现类
+    //或者是SpiExtensionFactory，或者是SpringExtensionFactory
     private final List<ExtensionFactory> factories;
 
     public AdaptiveExtensionFactory() {

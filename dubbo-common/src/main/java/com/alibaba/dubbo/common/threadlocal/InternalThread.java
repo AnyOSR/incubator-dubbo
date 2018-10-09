@@ -22,6 +22,7 @@ package com.alibaba.dubbo.common.threadlocal;
  */
 public class InternalThread extends Thread {
 
+    //线程隔离map
     private InternalThreadLocalMap threadLocalMap;
 
     public InternalThread() {

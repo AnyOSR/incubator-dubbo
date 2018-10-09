@@ -38,11 +38,13 @@ public class AdaptiveCompiler implements Compiler {
         Compiler compiler;
         ExtensionLoader<Compiler> loader = ExtensionLoader.getExtensionLoader(Compiler.class);
         String name = DEFAULT_COMPILER; // copy reference
+        //如果有name，则根据name获取实现类
         if (name != null && name.length() > 0) {
             compiler = loader.getExtension(name);
-        } else {
+        } else {  //否则，获取默认extension
             compiler = loader.getDefaultExtension();
         }
+        //用具体的实现类来进行编译
         return compiler.compile(code, classLoader);
     }
 

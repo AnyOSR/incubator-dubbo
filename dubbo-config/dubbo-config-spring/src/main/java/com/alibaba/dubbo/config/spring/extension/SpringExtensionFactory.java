@@ -48,13 +48,14 @@ public class SpringExtensionFactory implements ExtensionFactory {
         contexts.clear();
     }
 
+    //从spring上下文中获取
     @Override
     @SuppressWarnings("unchecked")
     public <T> T getExtension(Class<T> type, String name) {
         for (ApplicationContext context : contexts) {
             if (context.containsBean(name)) {
                 Object bean = context.getBean(name);
-                if (type.isInstance(bean)) {
+                if (type.isInstance(bean)) {               //首先根据name获取某个bean，然后判断该bean是不是type类型
                     return (T) bean;
                 }
             }
@@ -64,7 +65,7 @@ public class SpringExtensionFactory implements ExtensionFactory {
 
         for (ApplicationContext context : contexts) {
             try {
-                return context.getBean(type);
+                return context.getBean(type);                          //直接获取type类型的bean
             } catch (NoUniqueBeanDefinitionException multiBeanExe) {
                 throw multiBeanExe;
             } catch (NoSuchBeanDefinitionException noBeanExe) {
