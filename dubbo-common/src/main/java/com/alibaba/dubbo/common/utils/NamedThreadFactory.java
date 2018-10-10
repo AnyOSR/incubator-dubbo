@@ -34,6 +34,8 @@ public class NamedThreadFactory implements ThreadFactory {
 
     protected final ThreadGroup mGroup;
 
+    //用这个构造函数的话
+    //每个线程工厂类都有自己的mPrefix，且不用自己维护
     public NamedThreadFactory() {
         this("pool-" + POOL_SEQ.getAndIncrement(), false);
     }

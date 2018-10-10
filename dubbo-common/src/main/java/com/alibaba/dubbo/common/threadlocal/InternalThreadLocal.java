@@ -131,6 +131,8 @@ public class InternalThreadLocal<V> {
     /**
      * Returns the current value for the current thread
      */
+    //获取当前线程的局部变量
+    //如果未设置，则设置初始值
     @SuppressWarnings("unchecked")
     public final V get() {
         InternalThreadLocalMap threadLocalMap = InternalThreadLocalMap.get();
@@ -142,6 +144,7 @@ public class InternalThreadLocal<V> {
         return initialize(threadLocalMap);
     }
 
+    //设置线程局部变量的初始值
     private V initialize(InternalThreadLocalMap threadLocalMap) {
         V v = null;
         try {
@@ -150,6 +153,7 @@ public class InternalThreadLocal<V> {
             throw new RuntimeException(e);
         }
 
+        //设置值的同时，将该值加入到 待删除集合
         threadLocalMap.setIndexedVariable(index, v);
         addToVariablesToRemove(threadLocalMap, this);
         return v;
@@ -158,6 +162,7 @@ public class InternalThreadLocal<V> {
     /**
      * Sets the value for the current thread.
      */
+    //设置当前线程局部变量的值
     public final void set(V value) {
         if (value == null || value == InternalThreadLocalMap.UNSET) {
             remove();

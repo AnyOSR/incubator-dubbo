@@ -80,8 +80,7 @@ public class AnnotationBeanDefinitionParser extends AbstractSingleBeanDefinition
     private void registerReferenceAnnotationBeanPostProcessor(BeanDefinitionRegistry registry) {
 
         // Register @Reference Annotation Bean Processor
-        BeanRegistrar.registerInfrastructureBean(registry,
-                ReferenceAnnotationBeanPostProcessor.BEAN_NAME, ReferenceAnnotationBeanPostProcessor.class);
+        BeanRegistrar.registerInfrastructureBean(registry, ReferenceAnnotationBeanPostProcessor.BEAN_NAME, ReferenceAnnotationBeanPostProcessor.class);
 
     }
 

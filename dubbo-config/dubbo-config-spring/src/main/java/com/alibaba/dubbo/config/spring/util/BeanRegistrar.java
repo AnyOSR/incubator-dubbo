@@ -34,9 +34,7 @@ public class BeanRegistrar {
      * @param beanType               the type of bean
      * @param beanName               the name of bean
      */
-    public static void registerInfrastructureBean(BeanDefinitionRegistry beanDefinitionRegistry,
-                                                  String beanName,
-                                                  Class<?> beanType) {
+    public static void registerInfrastructureBean(BeanDefinitionRegistry beanDefinitionRegistry, String beanName, Class<?> beanType) {
 
         if (!beanDefinitionRegistry.containsBeanDefinition(beanName)) {
             RootBeanDefinition beanDefinition = new RootBeanDefinition(beanType);

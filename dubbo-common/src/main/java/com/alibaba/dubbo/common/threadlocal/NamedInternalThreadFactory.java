@@ -23,8 +23,10 @@ import com.alibaba.dubbo.common.utils.NamedThreadFactory;
  * NamedInternalThreadFactory
  * This is a threadFactory which produce {@link InternalThread}
  */
+//线程工厂类
 public class NamedInternalThreadFactory extends NamedThreadFactory {
 
+    //一般应该都用这个构造函数吧？
     public NamedInternalThreadFactory() {
         super();
     }

@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
  * MoreExecutors#sameThreadExecutor inline execution}) will be caught and
  * logged.
  */
+//任务执行链表
 public final class ExecutionList {
     // Logger to log exceptions caught when running runnables.
     static final Logger logger = LoggerFactory.getLogger(ExecutionList.class.getName());
@@ -91,6 +92,7 @@ public final class ExecutionList {
         // Lock while we check state.  We must maintain the lock while adding the
         // new pair so that another thread can't run the list out from under us.
         // We only add to the list if we have not yet started execution.
+        //如果还没有执行，则将当前任务以及线程池加入到链表头
         synchronized (this) {
             if (!executed) {
                 runnables = new RunnableExecutorPair(runnable, executor, runnables);
@@ -101,6 +103,9 @@ public final class ExecutionList {
         // getting called before some of the previously added runnables, but we're
         // OK with that.  If we want to change the contract to guarantee ordering
         // among runnables we'd have to modify the logic here to allow it.
+        //如果已经开始执行了，则直接submit
+        //有可能导致，先添加的任务后执行
+        //或者说后添加的任务先执行
         executeListener(runnable, executor);
     }
 
@@ -137,6 +142,10 @@ public final class ExecutionList {
 
         // N.B. All writes to the list and the next pointers must have happened before the above
         // synchronized block, so we can iterate the list without the lock held here.
+        //翻转链表
+        //使其按照add的顺序执行
+        //这里没必要加锁，list已经是线程栈里面的局部变量
+        //且之前的已经锁住了this，executed对其他线程是可见的
         RunnableExecutorPair reversedList = null;
         while (list != null) {
             RunnableExecutorPair tmp = list;
@@ -154,6 +163,7 @@ public final class ExecutionList {
      * Submits the given runnable to the given {@link Executor} catching and logging all
      * {@linkplain RuntimeException runtime exceptions} thrown by the executor.
      */
+    //有可能在调用线程执行，也有可能在线程池执行，依赖于executor的实现
     private static void executeListener(Runnable runnable, Executor executor) {
         try {
             executor.execute(runnable);
@@ -161,11 +171,11 @@ public final class ExecutionList {
             // Log it and keep going, bad runnable and/or executor.  Don't
             // punish the other runnables if we're given a bad one.  We only
             // catch RuntimeException because we want Errors to propagate up.
-            logger.error("RuntimeException while executing runnable "
-                    + runnable + " with executor " + executor, e);
+            logger.error("RuntimeException while executing runnable " + runnable + " with executor " + executor, e);
         }
     }
 
+    //单向任务链表
     private static final class RunnableExecutorPair {
         final Runnable runnable;
         final Executor executor;

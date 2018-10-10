@@ -61,6 +61,7 @@ public class ReflectUtilsTest extends TestCase {
     }
 
     public void testName2Class() throws Exception {
+        ReflectUtils.name2class("boolean[][]");
         assertEquals(boolean.class, ReflectUtils.name2class("boolean"));
         assertEquals(boolean[].class, ReflectUtils.name2class("boolean[]"));
         assertEquals(int[][].class, ReflectUtils.name2class(ReflectUtils.getName(int[][].class)));

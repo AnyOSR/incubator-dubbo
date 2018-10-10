@@ -383,6 +383,7 @@ public final class StringUtils {
         return buf.toString();
     }
 
+    //大写变小写，并在之前添加一个split(不包括首位)
     public static String camelToSplitName(String camelName, String split) {
         if (camelName == null || camelName.length() == 0) {
             return camelName;
@@ -390,21 +391,27 @@ public final class StringUtils {
         StringBuilder buf = null;
         for (int i = 0; i < camelName.length(); i++) {
             char ch = camelName.charAt(i);
+
+            //如果当前是大写字母
             if (ch >= 'A' && ch <= 'Z') {
+                //首次遇见大写字母，将之前的全部append上
                 if (buf == null) {
                     buf = new StringBuilder();
                     if (i > 0) {
                         buf.append(camelName.substring(0, i));
                     }
                 }
+                //每次遇到大写字母，都会添加一个split（除开index为0的大写字母）
                 if (i > 0) {
                     buf.append(split);
                 }
+                //然后将大写字母变小写
                 buf.append(Character.toLowerCase(ch));
-            } else if (buf != null) {
+            } else if (buf != null) {     //如果当前不是大写字母且之前已经出现过大写字母
                 buf.append(ch);
             }
         }
+        //如果没有遇到大写字母，原样返回
         return buf == null ? camelName : buf.toString();
     }
 
