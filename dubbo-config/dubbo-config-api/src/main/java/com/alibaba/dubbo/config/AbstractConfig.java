@@ -152,6 +152,10 @@ public abstract class AbstractConfig implements Serializable {
         }
     }
 
+    //返回一个类的tag名称
+    //如果class是一个数组类，则直接返回其simpleName(末尾有[])
+    //否则，返回其simpleName(去掉末尾的Config或者Bean，如果有的话)
+    //小写
     private static String getTagName(Class<?> cls) {
         String tag = cls.getSimpleName();
         for (String suffix : SUFFIXES) {
@@ -174,27 +178,30 @@ public abstract class AbstractConfig implements Serializable {
             return;
         }
         Method[] methods = config.getClass().getMethods();
+        //遍历config的所有方法
         for (Method method : methods) {
             try {
                 String name = method.getName();
-                if ((name.startsWith("get") || name.startsWith("is"))
-                        && !"getClass".equals(name)
-                        && Modifier.isPublic(method.getModifiers())
-                        && method.getParameterTypes().length == 0
-                        && isPrimitive(method.getReturnType())) {
+                if ((name.startsWith("get") || name.startsWith("is")) &&
+                        !"getClass".equals(name) && Modifier.isPublic(method.getModifiers()) && method.getParameterTypes().length == 0 && isPrimitive(method.getReturnType())) {
                     Parameter parameter = method.getAnnotation(Parameter.class);
+
+                    //如果返回类型为Object 或者 方法上有注解parameter不为null且parameter.excluded的值为true，直接跳过
                     if (method.getReturnType() == Object.class || parameter != null && parameter.excluded()) {
                         continue;
                     }
                     int i = name.startsWith("get") ? 3 : 2;
+                    //得到get方法准备获取的属性值，以.分开 (userName user.name)
                     String prop = StringUtils.camelToSplitName(name.substring(i, i + 1).toLowerCase() + name.substring(i + 1), ".");
                     String key;
+
+                    //获取key的值，首先从parameter注解中获取，如果没有获取到，令key = prop
                     if (parameter != null && parameter.key().length() > 0) {
                         key = parameter.key();
                     } else {
                         key = prop;
                     }
-                    Object value = method.invoke(config);
+                    Object value = method.invoke(config);  //得到属性的值
                     String str = String.valueOf(value).trim();
                     if (value != null && str.length() > 0) {
                         if (parameter != null && parameter.escaped()) {
