@@ -94,8 +94,9 @@ public abstract class AbstractConfig implements Serializable {
         for (Method method : methods) {
             try {
                 String name = method.getName();
-                if (name.length() > 3 && name.startsWith("set") && Modifier.isPublic(method.getModifiers())
-                        && method.getParameterTypes().length == 1 && isPrimitive(method.getParameterTypes()[0])) {
+                //set方法
+                if (name.length() > 3 && name.startsWith("set") && Modifier.isPublic(method.getModifiers()) && method.getParameterTypes().length == 1 && isPrimitive(method.getParameterTypes()[0])) {
+                    //split之后的属性名
                     String property = StringUtils.camelToSplitName(name.substring(3, 4).toLowerCase() + name.substring(4), ".");
 
                     String value = null;
@@ -113,6 +114,8 @@ public abstract class AbstractConfig implements Serializable {
                             logger.info("Use System Property " + pn + " to config dubbo");
                         }
                     }
+                    //以上代码确定了一种配置dubbo的方法，配置在系统属性里
+                    //如果系统里面找不到相关属性
                     if (value == null || value.length() == 0) {
                         Method getter;
                         try {
@@ -142,6 +145,7 @@ public abstract class AbstractConfig implements Serializable {
                             }
                         }
                     }
+                    //转换成其包装类
                     if (value != null && value.length() > 0) {
                         method.invoke(config, convertPrimitive(method.getParameterTypes()[0], value));
                     }
@@ -172,6 +176,10 @@ public abstract class AbstractConfig implements Serializable {
         appendParameters(parameters, config, null);
     }
 
+    //根据config对象以及其method方法上的注解，给parameters添加entry
+    //只针对简单类型 或者 简单类型对应的包装类
+    //有parameter注解，且excluded为true，则忽略该get方法对应的属性
+    //prefix "." key(从注解中获取或者根据config属性名获取)  《————》   (parameters[key] , parameters[default.key] , value(有escaped则编码))(有append)
     @SuppressWarnings("unchecked")
     protected static void appendParameters(Map<String, String> parameters, Object config, String prefix) {
         if (config == null) {
@@ -186,7 +194,8 @@ public abstract class AbstractConfig implements Serializable {
                         !"getClass".equals(name) && Modifier.isPublic(method.getModifiers()) && method.getParameterTypes().length == 0 && isPrimitive(method.getReturnType())) {
                     Parameter parameter = method.getAnnotation(Parameter.class);
 
-                    //如果返回类型为Object 或者 方法上有注解parameter不为null且parameter.excluded的值为true，直接跳过
+                    //如果返回类型为Object 或者
+                    //方法上有注解parameter且parameter.excluded的值为true，直接跳过
                     if (method.getReturnType() == Object.class || parameter != null && parameter.excluded()) {
                         continue;
                     }
@@ -201,33 +210,41 @@ public abstract class AbstractConfig implements Serializable {
                     } else {
                         key = prop;
                     }
-                    Object value = method.invoke(config);  //得到属性的值
-                    String str = String.valueOf(value).trim();
+                    Object value = method.invoke(config);              //得到属性的值
+                    String str = String.valueOf(value).trim();         //获取属性值的字符串形式
                     if (value != null && str.length() > 0) {
+
+                        //escaped为true，则编码str
                         if (parameter != null && parameter.escaped()) {
                             str = URL.encode(str);
                         }
+
+                        //append为true
                         if (parameter != null && parameter.append()) {
+
+                            //如果parameters中存在default. +key
+                            //则将str的值加上这个pre+","
                             String pre = parameters.get(Constants.DEFAULT_KEY + "." + key);
                             if (pre != null && pre.length() > 0) {
                                 str = pre + "," + str;
                             }
                             pre = parameters.get(key);
+                            //如果parameters中存在key,再次将其添加到str中
                             if (pre != null && pre.length() > 0) {
                                 str = pre + "," + str;
                             }
                         }
+
+                        //key + "."
                         if (prefix != null && prefix.length() > 0) {
                             key = prefix + "." + key;
                         }
                         parameters.put(key, str);
-                    } else if (parameter != null && parameter.required()) {
+                    } else if (parameter != null && parameter.required()) {          //如果value为空，而该字段必须有，则抛出异常
                         throw new IllegalStateException(config.getClass().getSimpleName() + "." + key + " == null");
                     }
-                } else if ("getParameters".equals(name)
-                        && Modifier.isPublic(method.getModifiers())
-                        && method.getParameterTypes().length == 0
-                        && method.getReturnType() == Map.class) {
+                //有parameters的类型为map
+                } else if ("getParameters".equals(name) && Modifier.isPublic(method.getModifiers()) && method.getParameterTypes().length == 0 && method.getReturnType() == Map.class) {
                     Map<String, String> map = (Map<String, String>) method.invoke(config, new Object[0]);
                     if (map != null && map.size() > 0) {
                         String pre = (prefix != null && prefix.length() > 0 ? prefix + "." : "");
@@ -254,10 +271,7 @@ public abstract class AbstractConfig implements Serializable {
         for (Method method : methods) {
             try {
                 String name = method.getName();
-                if ((name.startsWith("get") || name.startsWith("is"))
-                        && !"getClass".equals(name)
-                        && Modifier.isPublic(method.getModifiers())
-                        && method.getParameterTypes().length == 0
+                if ((name.startsWith("get") || name.startsWith("is")) && !"getClass".equals(name) && Modifier.isPublic(method.getModifiers()) && method.getParameterTypes().length == 0
                         && isPrimitive(method.getReturnType())) {
                     Parameter parameter = method.getAnnotation(Parameter.class);
                     if (parameter == null || !parameter.attribute())

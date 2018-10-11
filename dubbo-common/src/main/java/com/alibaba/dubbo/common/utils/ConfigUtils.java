@@ -36,8 +36,7 @@ import java.util.regex.Pattern;
 public class ConfigUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigUtils.class);
-    private static Pattern VARIABLE_PATTERN = Pattern.compile(
-            "\\$\\s*\\{?\\s*([\\._0-9a-zA-Z]+)\\s*\\}?");
+    private static Pattern VARIABLE_PATTERN = Pattern.compile("\\$\\s*\\{?\\s*([\\._0-9a-zA-Z]+)\\s*\\}?");   //  $ 空白字符(0个或者多个) {(0次或者一次)  空白字符(0个或者多个) .||_||数字字母  空白字符(0个或者多个)  }(0次或者一次)
     private static volatile Properties PROPERTIES;
     private static int PID = -1;
 
@@ -118,14 +117,16 @@ public class ConfigUtils {
         return names;
     }
 
+    //将expression中${}里面的key替换掉
+    //如果value里面有$或者\，将被保留
     public static String replaceProperty(String expression, Map<String, String> params) {
         if (expression == null || expression.length() == 0 || expression.indexOf('$') < 0) {
             return expression;
         }
-        Matcher matcher = VARIABLE_PATTERN.matcher(expression);
+        Matcher matcher = VARIABLE_PATTERN.matcher(expression);   //${asdasdasd}...${sdfsdf}
         StringBuffer sb = new StringBuffer();
         while (matcher.find()) {
-            String key = matcher.group(1);
+            String key = matcher.group(1);    //获取key
             String value = System.getProperty(key);
             if (value == null && params != null) {
                 value = params.get(key);
@@ -139,6 +140,7 @@ public class ConfigUtils {
         return sb.toString();
     }
 
+    //获取本地文件的properties
     public static Properties getProperties() {
         if (PROPERTIES == null) {
             synchronized (ConfigUtils.class) {
@@ -171,6 +173,11 @@ public class ConfigUtils {
         return getProperty(key, null);
     }
 
+    //从系统属性或者本地文件中拿到key对应的value值
+    //系统中储存，则直接返回
+    //如果系统中不存在，根据本地的文件
+    //拿到本地文件中key对应的value值(值中可能有${}之类的)
+    //如果有，对其进行替换
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static String getProperty(String key, String defaultValue) {
         String value = System.getProperty(key);
@@ -178,6 +185,9 @@ public class ConfigUtils {
             return value;
         }
         Properties properties = getProperties();
+        //properties存储了两类数据?
+        //一类是abcasd  ${a.b.c}
+        //另一类是a.b.c ${a.b.c}
         return replaceProperty(properties.getProperty(key, defaultValue), (Map) properties);
     }
 
@@ -217,6 +227,8 @@ public class ConfigUtils {
      */
     public static Properties loadProperties(String fileName, boolean allowMultiFile, boolean optional) {
         Properties properties = new Properties();
+
+        //如果fileName以/开头
         if (fileName.startsWith("/")) {
             try {
                 FileInputStream input = new FileInputStream(fileName);
@@ -231,6 +243,8 @@ public class ConfigUtils {
             return properties;
         }
 
+        //getResources
+        //没有文件直接返回
         List<java.net.URL> list = new ArrayList<java.net.URL>();
         try {
             Enumeration<java.net.URL> urls = ClassHelper.getClassLoader().getResources(fileName);
@@ -241,7 +255,6 @@ public class ConfigUtils {
         } catch (Throwable t) {
             logger.warn("Fail to load " + fileName + " file: " + t.getMessage(), t);
         }
-
         if (list.isEmpty()) {
             if (!optional) {
                 logger.warn("No " + fileName + " found on the class path.");
@@ -249,10 +262,11 @@ public class ConfigUtils {
             return properties;
         }
 
+        //如果getResources拿到了文件
+        //如果不允许多个文件
         if (!allowMultiFile) {
-            if (list.size() > 1) {
-                String errMsg = String.format("only 1 %s file is expected, but %d dubbo.properties files found on class path: %s",
-                        fileName, list.size(), list.toString());
+            if (list.size() > 1) { //如果拿到了多个文件，直打个日志？
+                String errMsg = String.format("only 1 %s file is expected, but %d dubbo.properties files found on class path: %s", fileName, list.size(), list.toString());
                 logger.warn(errMsg);
                 // throw new IllegalStateException(errMsg); // see http://code.alibabatech.com/jira/browse/DUBBO-133
             }
@@ -268,6 +282,7 @@ public class ConfigUtils {
 
         logger.info("load " + fileName + " properties file from " + list);
 
+        //允许多个文件，加载所有的文件
         for (java.net.URL url : list) {
             try {
                 Properties p = new Properties();
