@@ -85,6 +85,7 @@ public abstract class AbstractConfig implements Serializable {
         return value;
     }
 
+    //根据系统属性或者本地配置文件给config set值
     protected static void appendProperties(AbstractConfig config) {
         if (config == null) {
             return;
@@ -335,8 +336,7 @@ public abstract class AbstractConfig implements Serializable {
 
     protected static void checkExtension(Class<?> type, String property, String value) {
         checkName(property, value);
-        if (value != null && value.length() > 0
-                && !ExtensionLoader.getExtensionLoader(type).hasExtension(value)) {
+        if (value != null && value.length() > 0 && !ExtensionLoader.getExtensionLoader(type).hasExtension(value)) {
             throw new IllegalStateException("No such extension " + value + " for " + property + "/" + type.getName());
         }
     }
@@ -425,8 +425,13 @@ public abstract class AbstractConfig implements Serializable {
         this.id = id;
     }
 
+    //根据annotationClass  (属性名)
+    //和annotation         (属性值)
+    //给调用对象this赋值
     protected void appendAnnotation(Class<?> annotationClass, Object annotation) {
         Method[] methods = annotationClass.getMethods();
+
+        //不是Object的方法 返回类型不是void 参数个数为0 public 非static
         for (Method method : methods) {
             if (method.getDeclaringClass() != Object.class
                     && method.getReturnType() != void.class
@@ -434,23 +439,34 @@ public abstract class AbstractConfig implements Serializable {
                     && Modifier.isPublic(method.getModifiers())
                     && !Modifier.isStatic(method.getModifiers())) {
                 try {
+                    //获取注解属性名
                     String property = method.getName();
                     if ("interfaceClass".equals(property) || "interfaceName".equals(property)) {
                         property = "interface";
                     }
+                    //set方法
                     String setter = "set" + property.substring(0, 1).toUpperCase() + property.substring(1);
+                    //获取注解属性值
                     Object value = method.invoke(annotation);
+
                     if (value != null && !value.equals(method.getDefaultValue())) {
                         Class<?> parameterType = ReflectUtils.getBoxedClass(method.getReturnType());
+
+                        //filter和listener的返回类型肯定都是数组？
                         if ("filter".equals(property) || "listener".equals(property)) {
                             parameterType = String.class;
                             value = StringUtils.join((String[]) value, ",");
+
+                        //parameters返回类型都是map？
                         } else if ("parameters".equals(property)) {
                             parameterType = Map.class;
                             value = CollectionUtils.toStringMap((String[]) value);
                         }
                         try {
+                            //获取方法名为setter，参数类型为parameterType的set method
+                            //filter，listener，parameters是不是应该定义在这个基类里面？
                             Method setterMethod = getClass().getMethod(setter, parameterType);
+                            //给调用对象赋值
                             setterMethod.invoke(this, value);
                         } catch (NoSuchMethodException e) {
                             // ignore
