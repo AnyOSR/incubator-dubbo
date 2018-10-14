@@ -4092,13 +4092,64 @@
 											"height": 13,
 											"text": "«private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs)»+doExportUrlsFor1Protocol()",
 											"horizontalAlignment": 0
+										},
+										{
+											"_type": "UMLOperationView",
+											"_id": "AAAAAAFmckIyJfp1ZcI=",
+											"_parent": {
+												"$ref": "AAAAAAFmaHHUsTS4A4Y="
+											},
+											"model": {
+												"$ref": "AAAAAAFmckIyB/pygnM="
+											},
+											"font": "Arial;13;0",
+											"left": 2573,
+											"top": 2400,
+											"width": 728.66015625,
+											"height": 13,
+											"text": "+findConfigedHosts()",
+											"horizontalAlignment": 0
+										},
+										{
+											"_type": "UMLOperationView",
+											"_id": "AAAAAAFmckUZ0PrIjr4=",
+											"_parent": {
+												"$ref": "AAAAAAFmaHHUsTS4A4Y="
+											},
+											"model": {
+												"$ref": "AAAAAAFmckUZnfrFZ84="
+											},
+											"font": "Arial;13;0",
+											"left": 2573,
+											"top": 2415,
+											"width": 728.66015625,
+											"height": 13,
+											"text": "+findConfigedPorts()",
+											"horizontalAlignment": 0
+										},
+										{
+											"_type": "UMLOperationView",
+											"_id": "AAAAAAFmckI1WPp7ueE=",
+											"_parent": {
+												"$ref": "AAAAAAFmaHHUsTS4A4Y="
+											},
+											"model": {
+												"$ref": "AAAAAAFmckI1R/p4dlY="
+											},
+											"font": "Arial;13;0",
+											"left": 2573,
+											"top": 2430,
+											"width": 728.66015625,
+											"height": 13,
+											"text": "+exportLocal()",
+											"horizontalAlignment": 0
 										}
 									],
 									"font": "Arial;13;0",
 									"left": 2568,
 									"top": 2335,
 									"width": 738.66015625,
-									"height": 68
+									"height": 113
 								},
 								{
 									"_type": "UMLReceptionCompartmentView",
@@ -4138,7 +4189,7 @@
 							"left": 2568,
 							"top": 2152,
 							"width": 738.66015625,
-							"height": 251,
+							"height": 296,
 							"nameCompartment": {
 								"$ref": "AAAAAAFmaHHUsDSyqQg="
 							},
@@ -9674,6 +9725,240 @@
 							"templateParameterCompartment": {
 								"$ref": "AAAAAAFmceGdZLLL1o0="
 							}
+						},
+						{
+							"_type": "UMLInterfaceView",
+							"_id": "AAAAAAFmckNCjvqCOKE=",
+							"_parent": {
+								"$ref": "AAAAAAFF+qBtyKM79qY="
+							},
+							"model": {
+								"$ref": "AAAAAAFmckNCjfqAfOQ="
+							},
+							"subViews": [
+								{
+									"_type": "UMLNameCompartmentView",
+									"_id": "AAAAAAFmckNCjvqDcqQ=",
+									"_parent": {
+										"$ref": "AAAAAAFmckNCjvqCOKE="
+									},
+									"model": {
+										"$ref": "AAAAAAFmckNCjfqAfOQ="
+									},
+									"subViews": [
+										{
+											"_type": "LabelView",
+											"_id": "AAAAAAFmckNCjvqEuBs=",
+											"_parent": {
+												"$ref": "AAAAAAFmckNCjvqDcqQ="
+											},
+											"visible": false,
+											"font": "Arial;13;0",
+											"left": 1968,
+											"top": 336,
+											"width": 64.32080078125,
+											"height": 13,
+											"text": "«interface»"
+										},
+										{
+											"_type": "LabelView",
+											"_id": "AAAAAAFmckNCjvqFdgs=",
+											"_parent": {
+												"$ref": "AAAAAAFmckNCjvqDcqQ="
+											},
+											"font": "Arial;13;1",
+											"left": 1541,
+											"top": 2254,
+											"width": 274.18701171875,
+											"height": 13,
+											"text": "Protocol"
+										},
+										{
+											"_type": "LabelView",
+											"_id": "AAAAAAFmckNCjvqG8f8=",
+											"_parent": {
+												"$ref": "AAAAAAFmckNCjvqDcqQ="
+											},
+											"visible": false,
+											"font": "Arial;13;0",
+											"left": 1968,
+											"top": 336,
+											"width": 73.67724609375,
+											"height": 13,
+											"text": "(from Model)"
+										},
+										{
+											"_type": "LabelView",
+											"_id": "AAAAAAFmckNCjvqH3yo=",
+											"_parent": {
+												"$ref": "AAAAAAFmckNCjvqDcqQ="
+											},
+											"visible": false,
+											"font": "Arial;13;0",
+											"left": 1968,
+											"top": 336,
+											"height": 13,
+											"horizontalAlignment": 1
+										}
+									],
+									"font": "Arial;13;0",
+									"left": 1536,
+									"top": 2247,
+									"width": 284.18701171875,
+									"height": 25,
+									"stereotypeLabel": {
+										"$ref": "AAAAAAFmckNCjvqEuBs="
+									},
+									"nameLabel": {
+										"$ref": "AAAAAAFmckNCjvqFdgs="
+									},
+									"namespaceLabel": {
+										"$ref": "AAAAAAFmckNCjvqG8f8="
+									},
+									"propertyLabel": {
+										"$ref": "AAAAAAFmckNCjvqH3yo="
+									}
+								},
+								{
+									"_type": "UMLAttributeCompartmentView",
+									"_id": "AAAAAAFmckNCj/qIlGI=",
+									"_parent": {
+										"$ref": "AAAAAAFmckNCjvqCOKE="
+									},
+									"model": {
+										"$ref": "AAAAAAFmckNCjfqAfOQ="
+									},
+									"subViews": [
+										{
+											"_type": "UMLAttributeView",
+											"_id": "AAAAAAFmckNndvquu9M=",
+											"_parent": {
+												"$ref": "AAAAAAFmckNCj/qIlGI="
+											},
+											"model": {
+												"$ref": "AAAAAAFmckNnTfqrV2w="
+											},
+											"font": "Arial;13;0",
+											"left": 1541,
+											"top": 2277,
+											"width": 274.18701171875,
+											"height": 13,
+											"text": "+int getDefaultPort()",
+											"horizontalAlignment": 0
+										},
+										{
+											"_type": "UMLAttributeView",
+											"_id": "AAAAAAFmckPZ9Pq2Y7k=",
+											"_parent": {
+												"$ref": "AAAAAAFmckNCj/qIlGI="
+											},
+											"model": {
+												"$ref": "AAAAAAFmckPZt/qzB1M="
+											},
+											"font": "Arial;13;0",
+											"left": 1541,
+											"top": 2292,
+											"width": 274.18701171875,
+											"height": 13,
+											"text": "+<T> Exporter<T> export(Invoker<T> invoker)",
+											"horizontalAlignment": 0
+										},
+										{
+											"_type": "UMLAttributeView",
+											"_id": "AAAAAAFmckRHuvrBPnM=",
+											"_parent": {
+												"$ref": "AAAAAAFmckNCj/qIlGI="
+											},
+											"model": {
+												"$ref": "AAAAAAFmckRHfvq+wGw="
+											},
+											"font": "Arial;13;0",
+											"left": 1541,
+											"top": 2307,
+											"width": 274.18701171875,
+											"height": 13,
+											"text": "+<T> Invoker<T> refer(Class<T> type, URL url)",
+											"horizontalAlignment": 0
+										}
+									],
+									"font": "Arial;13;0",
+									"left": 1536,
+									"top": 2272,
+									"width": 284.18701171875,
+									"height": 53
+								},
+								{
+									"_type": "UMLOperationCompartmentView",
+									"_id": "AAAAAAFmckNCj/qJ5vA=",
+									"_parent": {
+										"$ref": "AAAAAAFmckNCjvqCOKE="
+									},
+									"model": {
+										"$ref": "AAAAAAFmckNCjfqAfOQ="
+									},
+									"visible": false,
+									"font": "Arial;13;0",
+									"left": 984,
+									"top": 168,
+									"width": 10,
+									"height": 10
+								},
+								{
+									"_type": "UMLReceptionCompartmentView",
+									"_id": "AAAAAAFmckNCj/qKW/c=",
+									"_parent": {
+										"$ref": "AAAAAAFmckNCjvqCOKE="
+									},
+									"model": {
+										"$ref": "AAAAAAFmckNCjfqAfOQ="
+									},
+									"visible": false,
+									"font": "Arial;13;0",
+									"left": 984,
+									"top": 168,
+									"width": 10,
+									"height": 10
+								},
+								{
+									"_type": "UMLTemplateParameterCompartmentView",
+									"_id": "AAAAAAFmckNCj/qLM6E=",
+									"_parent": {
+										"$ref": "AAAAAAFmckNCjvqCOKE="
+									},
+									"model": {
+										"$ref": "AAAAAAFmckNCjfqAfOQ="
+									},
+									"visible": false,
+									"font": "Arial;13;0",
+									"left": 984,
+									"top": 168,
+									"width": 10,
+									"height": 10
+								}
+							],
+							"font": "Arial;13;0",
+							"containerChangeable": true,
+							"left": 1536,
+							"top": 2224,
+							"width": 284.18701171875,
+							"height": 102,
+							"stereotypeDisplay": "icon",
+							"nameCompartment": {
+								"$ref": "AAAAAAFmckNCjvqDcqQ="
+							},
+							"suppressOperations": true,
+							"attributeCompartment": {
+								"$ref": "AAAAAAFmckNCj/qIlGI="
+							},
+							"operationCompartment": {
+								"$ref": "AAAAAAFmckNCj/qJ5vA="
+							},
+							"receptionCompartment": {
+								"$ref": "AAAAAAFmckNCj/qKW/c="
+							},
+							"templateParameterCompartment": {
+								"$ref": "AAAAAAFmckNCj/qLM6E="
+							}
 						}
 					]
 				},
@@ -10643,6 +10928,30 @@
 							},
 							"name": "doExportUrlsFor1Protocol",
 							"stereotype": "private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs)"
+						},
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAFmckIyB/pygnM=",
+							"_parent": {
+								"$ref": "AAAAAAFmaHHUsDSvPJs="
+							},
+							"name": "findConfigedHosts"
+						},
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAFmckUZnfrFZ84=",
+							"_parent": {
+								"$ref": "AAAAAAFmaHHUsDSvPJs="
+							},
+							"name": "findConfigedPorts"
+						},
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAFmckI1R/p4dlY=",
+							"_parent": {
+								"$ref": "AAAAAAFmaHHUsDSvPJs="
+							},
+							"name": "exportLocal"
 						}
 					]
 				},
@@ -11347,7 +11656,8 @@
 							"_parent": {
 								"$ref": "AAAAAAFmcb5Cq65phew="
 							},
-							"name": "Object getValue()"
+							"name": "Object getValue()",
+							"type": ""
 						},
 						{
 							"_type": "UMLAttribute",
@@ -11759,6 +12069,43 @@
 								"$ref": "AAAAAAFmceGdY7LAnV8="
 							},
 							"name": "void unexport()",
+							"type": ""
+						}
+					]
+				},
+				{
+					"_type": "UMLInterface",
+					"_id": "AAAAAAFmckNCjfqAfOQ=",
+					"_parent": {
+						"$ref": "AAAAAAFF+qBWK6M3Z8Y="
+					},
+					"name": "Protocol",
+					"attributes": [
+						{
+							"_type": "UMLAttribute",
+							"_id": "AAAAAAFmckNnTfqrV2w=",
+							"_parent": {
+								"$ref": "AAAAAAFmckNCjfqAfOQ="
+							},
+							"name": "int getDefaultPort()",
+							"type": ""
+						},
+						{
+							"_type": "UMLAttribute",
+							"_id": "AAAAAAFmckPZt/qzB1M=",
+							"_parent": {
+								"$ref": "AAAAAAFmckNCjfqAfOQ="
+							},
+							"name": "<T> Exporter<T> export(Invoker<T> invoker)",
+							"type": ""
+						},
+						{
+							"_type": "UMLAttribute",
+							"_id": "AAAAAAFmckRHfvq+wGw=",
+							"_parent": {
+								"$ref": "AAAAAAFmckNCjfqAfOQ="
+							},
+							"name": "<T> Invoker<T> refer(Class<T> type, URL url)",
 							"type": ""
 						}
 					]
