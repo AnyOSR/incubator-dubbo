@@ -45,17 +45,15 @@ public class ProtocolUtils {
         return buf.toString();
     }
 
+    //检测generic是否为true||nativejava||bean
     public static boolean isGeneric(String generic) {
-        return generic != null
-                && !"".equals(generic)
-                && (Constants.GENERIC_SERIALIZATION_DEFAULT.equalsIgnoreCase(generic)  /* Normal generalization cal */
+        return generic != null && !"".equals(generic) && (Constants.GENERIC_SERIALIZATION_DEFAULT.equalsIgnoreCase(generic)  /* Normal generalization cal */
                 || Constants.GENERIC_SERIALIZATION_NATIVE_JAVA.equalsIgnoreCase(generic) /* Streaming generalization call supporting jdk serialization */
                 || Constants.GENERIC_SERIALIZATION_BEAN.equalsIgnoreCase(generic));
     }
 
     public static boolean isDefaultGenericSerialization(String generic) {
-        return isGeneric(generic)
-                && Constants.GENERIC_SERIALIZATION_DEFAULT.equalsIgnoreCase(generic);
+        return isGeneric(generic) && Constants.GENERIC_SERIALIZATION_DEFAULT.equalsIgnoreCase(generic);
     }
 
     public static boolean isJavaGenericSerialization(String generic) {

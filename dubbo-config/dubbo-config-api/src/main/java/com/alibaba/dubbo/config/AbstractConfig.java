@@ -334,6 +334,8 @@ public abstract class AbstractConfig implements Serializable {
         return value;
     }
 
+    //检查value是否符合规则
+    //以及是否有名为value的type型扩展
     protected static void checkExtension(Class<?> type, String property, String value) {
         checkName(property, value);
         if (value != null && value.length() > 0 && !ExtensionLoader.getExtensionLoader(type).hasExtension(value)) {
@@ -341,6 +343,7 @@ public abstract class AbstractConfig implements Serializable {
         }
     }
 
+    //检查是否存在名为value.split("\\s*[,]+\\s*")类型为type的扩展
     protected static void checkMultiExtension(Class<?> type, String property, String value) {
         checkMultiName(property, value);
         if (value != null && value.length() > 0) {
@@ -410,8 +413,7 @@ public abstract class AbstractConfig implements Serializable {
         if (pattern != null) {
             Matcher matcher = pattern.matcher(value);
             if (!matcher.matches()) {
-                throw new IllegalStateException("Invalid " + property + "=\"" + value + "\" contains illegal " +
-                        "character, only digit, letter, '-', '_' or '.' is legal.");
+                throw new IllegalStateException("Invalid " + property + "=\"" + value + "\" contains illegal " + "character, only digit, letter, '-', '_' or '.' is legal.");
             }
         }
     }

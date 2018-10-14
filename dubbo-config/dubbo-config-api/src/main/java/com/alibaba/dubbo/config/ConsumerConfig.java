@@ -35,8 +35,7 @@ public class ConsumerConfig extends AbstractReferenceConfig {
     public void setTimeout(Integer timeout) {
         super.setTimeout(timeout);
         String rmiTimeout = System.getProperty("sun.rmi.transport.tcp.responseTimeout");
-        if (timeout != null && timeout > 0
-                && (rmiTimeout == null || rmiTimeout.length() == 0)) {
+        if (timeout != null && timeout > 0 && (rmiTimeout == null || rmiTimeout.length() == 0)) {
             System.setProperty("sun.rmi.transport.tcp.responseTimeout", String.valueOf(timeout));
         }
     }

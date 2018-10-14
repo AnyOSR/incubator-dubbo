@@ -27,6 +27,8 @@ import java.util.Set;
 
 public class UrlUtils {
 
+    //将defaults的entry数组赋值给address
+    //address有则不更新，没有则put
     public static URL parseURL(String address, Map<String, String> defaults) {
         if (address == null || address.length() == 0) {
             return null;
@@ -48,6 +50,8 @@ public class UrlUtils {
                 url += "?" + Constants.BACKUP_KEY + "=" + backup.toString();
             }
         }
+
+        //获取defaults里面的参数
         String defaultProtocol = defaults == null ? null : defaults.get("protocol");
         if (defaultProtocol == null || defaultProtocol.length() == 0) {
             defaultProtocol = "dubbo";
@@ -65,6 +69,8 @@ public class UrlUtils {
             defaultParameters.remove("port");
             defaultParameters.remove("path");
         }
+
+        //根据url解析参数并生成URL对象
         URL u = URL.valueOf(url);
         boolean changed = false;
         String protocol = u.getProtocol();
@@ -74,6 +80,10 @@ public class UrlUtils {
         int port = u.getPort();
         String path = u.getPath();
         Map<String, String> parameters = new HashMap<String, String>(u.getParameters());
+
+        //只有在url里面某个key对应的值为空，defaults相应key参数的值不为空时，
+        //才用default相应key参数的值赋值给url对应的key参数的值
+        //才视为参数发生了变化
         if ((protocol == null || protocol.length() == 0) && defaultProtocol != null && defaultProtocol.length() > 0) {
             changed = true;
             protocol = defaultProtocol;
@@ -105,6 +115,9 @@ public class UrlUtils {
                 path = defaultPath;
             }
         }
+
+        //将default的parameter 赋值给address
+        //有不更新，没有则put
         if (defaultParameters != null && defaultParameters.size() > 0) {
             for (Map.Entry<String, String> entry : defaultParameters.entrySet()) {
                 String key = entry.getKey();

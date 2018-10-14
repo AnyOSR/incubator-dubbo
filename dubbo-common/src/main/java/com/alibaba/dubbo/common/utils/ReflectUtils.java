@@ -775,8 +775,11 @@ public final class ReflectUtils {
      * @throws ClassNotFoundException
      * @throws IllegalStateException  when multiple methods are found (overridden method when parameter info is not provided)
      */
-    public static Method findMethodByMethodSignature(Class<?> clazz, String methodName, String[] parameterTypes)
-            throws NoSuchMethodException, ClassNotFoundException {
+
+    //根据methodName以及clazz查找Method
+    public static Method findMethodByMethodSignature(Class<?> clazz, String methodName, String[] parameterTypes) throws NoSuchMethodException, ClassNotFoundException {
+
+        //拼装缓存的key
         String signature = clazz.getName() + "." + methodName;
         if (parameterTypes != null && parameterTypes.length > 0) {
             signature += StringUtils.join(parameterTypes);
@@ -785,6 +788,8 @@ public final class ReflectUtils {
         if (method != null) {
             return method;
         }
+
+        //不允许重载
         if (parameterTypes == null) {
             List<Method> finded = new ArrayList<Method>();
             for (Method m : clazz.getMethods()) {
@@ -796,12 +801,12 @@ public final class ReflectUtils {
                 throw new NoSuchMethodException("No such method " + methodName + " in class " + clazz);
             }
             if (finded.size() > 1) {
-                String msg = String.format("Not unique method for method name(%s) in class(%s), find %d methods.",
-                        methodName, clazz.getName(), finded.size());
+                String msg = String.format("Not unique method for method name(%s) in class(%s), find %d methods.", methodName, clazz.getName(), finded.size());
                 throw new IllegalStateException(msg);
             }
             method = finded.get(0);
         } else {
+            //根据指定参数类型和name查找method
             Class<?>[] types = new Class<?>[parameterTypes.length];
             for (int i = 0; i < parameterTypes.length; i++) {
                 types[i] = ReflectUtils.name2class(parameterTypes[i]);
@@ -826,9 +831,7 @@ public final class ReflectUtils {
             targetConstructor = null;
             Constructor<?>[] constructors = clazz.getConstructors();
             for (Constructor<?> constructor : constructors) {
-                if (Modifier.isPublic(constructor.getModifiers())
-                        && constructor.getParameterTypes().length == 1
-                        && constructor.getParameterTypes()[0].isAssignableFrom(paramType)) {
+                if (Modifier.isPublic(constructor.getModifiers()) && constructor.getParameterTypes().length == 1 && constructor.getParameterTypes()[0].isAssignableFrom(paramType)) {
                     targetConstructor = constructor;
                     break;
                 }
@@ -868,6 +871,8 @@ public final class ReflectUtils {
         return getEmptyObject(returnType, new HashMap<Class<?>, Object>(), 0);
     }
 
+    //返回每个returnType类型的默认值或者empty值
+    //emptyInstances 缓存
     private static Object getEmptyObject(Class<?> returnType, Map<Class<?>, Object> emptyInstances, int level) {
         if (level > 2)
             return null;
@@ -907,6 +912,8 @@ public final class ReflectUtils {
                     emptyInstances.put(returnType, value);
                 }
                 Class<?> cls = value.getClass();
+                //从当前类到子类
+                //所有基本类型
                 while (cls != null && cls != Object.class) {
                     Field[] fields = cls.getDeclaredFields();
                     for (Field field : fields) {

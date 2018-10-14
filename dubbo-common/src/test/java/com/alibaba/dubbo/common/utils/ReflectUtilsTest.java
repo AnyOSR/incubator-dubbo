@@ -109,8 +109,7 @@ public class ReflectUtilsTest extends TestCase {
     @Test
     public void test_findMethodByMethodSignature_override() throws Exception {
         {
-            Method m = ReflectUtils.findMethodByMethodSignature(TestedClass.class,
-                    "overrideMethod", new String[]{"int"});
+            Method m = ReflectUtils.findMethodByMethodSignature(TestedClass.class, "overrideMethod", new String[]{"int"});
 
             assertEquals("overrideMethod", m.getName());
             Class<?>[] parameterTypes = m.getParameterTypes();
@@ -118,8 +117,7 @@ public class ReflectUtilsTest extends TestCase {
             assertEquals(int.class, parameterTypes[0]);
         }
         {
-            Method m = ReflectUtils.findMethodByMethodSignature(TestedClass.class,
-                    "overrideMethod", new String[]{"java.lang.Integer"});
+            Method m = ReflectUtils.findMethodByMethodSignature(TestedClass.class, "overrideMethod", new String[]{"java.lang.Integer"});
 
             assertEquals("overrideMethod", m.getName());
             Class<?>[] parameterTypes = m.getParameterTypes();

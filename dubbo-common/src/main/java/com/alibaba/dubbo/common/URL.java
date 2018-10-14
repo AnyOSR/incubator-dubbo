@@ -68,6 +68,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @see java.net.URL
  * @see java.net.URI
  */
+//URL是"无状态"的？
 public final class URL implements Serializable {
 
     private static final long serialVersionUID = -1985165475234910535L;
@@ -147,8 +148,7 @@ public final class URL implements Serializable {
     }
 
     public URL(String protocol, String username, String password, String host, int port, String path, Map<String, String> parameters) {
-        if ((username == null || username.length() == 0)
-                && password != null && password.length() > 0) {
+        if ((username == null || username.length() == 0) && password != null && password.length() > 0) {
             throw new IllegalArgumentException("Invalid url, password without username!");
         }
         this.protocol = protocol;
@@ -176,6 +176,7 @@ public final class URL implements Serializable {
      * @return URL instance
      * @see URL
      */
+    //根据url解析各项参数
     public static URL valueOf(String url) {
         if (url == null || (url = url.trim()).length() == 0) {
             throw new IllegalArgumentException("url == null");
@@ -188,6 +189,9 @@ public final class URL implements Serializable {
         String path = null;
         Map<String, String> parameters = null;
         int i = url.indexOf("?"); // seperator between body and parameters 
+
+        //参数部分
+        //解析参数并放入map
         if (i >= 0) {
             String[] parts = url.substring(i + 1).split("\\&");
             parameters = new HashMap<String, String>();
@@ -202,8 +206,11 @@ public final class URL implements Serializable {
                     }
                 }
             }
+            //body部分
             url = url.substring(0, i);
         }
+
+        //解析body(protocol部分)
         i = url.indexOf("://");
         if (i >= 0) {
             if (i == 0) throw new IllegalStateException("url missing protocol: \"" + url + "\"");
@@ -215,7 +222,7 @@ public final class URL implements Serializable {
             if (i >= 0) {
                 if (i == 0) throw new IllegalStateException("url missing protocol: \"" + url + "\"");
                 protocol = url.substring(0, i);
-                url = url.substring(i + 1);
+                url = url.substring(i + 1);  //包含前面的斜杠
             }
         }
 
@@ -290,12 +297,10 @@ public final class URL implements Serializable {
     }
 
     public String getAuthority() {
-        if ((username == null || username.length() == 0)
-                && (password == null || password.length() == 0)) {
+        if ((username == null || username.length() == 0) && (password == null || password.length() == 0)) {
             return null;
         }
-        return (username == null ? "" : username)
-                + ":" + (password == null ? "" : password);
+        return (username == null ? "" : username) + ":" + (password == null ? "" : password);
     }
 
     public String getHost() {
@@ -378,9 +383,9 @@ public final class URL implements Serializable {
         return urls;
     }
 
+    //根据address和defaultPort拼装url
     private String appendDefaultPort(String address, int defaultPort) {
-        if (address != null && address.length() > 0
-                && defaultPort > 0) {
+        if (address != null && address.length() > 0 && defaultPort > 0) {
             int i = address.indexOf(':');
             if (i < 0) {
                 return address + ":" + defaultPort;
@@ -399,6 +404,7 @@ public final class URL implements Serializable {
         return new URL(protocol, username, password, host, port, path, getParameters());
     }
 
+    //获取绝对路径
     public String getAbsolutePath() {
         if (path != null && !path.startsWith("/")) {
             return "/" + path;
@@ -922,9 +928,10 @@ public final class URL implements Serializable {
         return addParameter(key, String.valueOf(value));
     }
 
+    //将key-value加入到this.parameters
+    //当且仅当参数有效且value值发生变化
     public URL addParameter(String key, String value) {
-        if (key == null || key.length() == 0
-                || value == null || value.length() == 0) {
+        if (key == null || key.length() == 0 || value == null || value.length() == 0) {
             return this;
         }
         // if value doesn't change, return immediately

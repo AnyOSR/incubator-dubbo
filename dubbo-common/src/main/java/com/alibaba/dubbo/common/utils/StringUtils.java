@@ -349,6 +349,7 @@ public final class StringUtils {
         return parseKeyValuePair(qs, "\\&");
     }
 
+    //   [ps["group"]+"/"]     ps["interface"]   [":"+ps["version"]]
     public static String getServiceKey(Map<String, String> ps) {
         StringBuilder buf = new StringBuilder();
         String group = ps.get(Constants.GROUP_KEY);

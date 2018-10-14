@@ -31,6 +31,7 @@ public class ClusterUtils {
     private ClusterUtils() {
     }
 
+    //根据localMap merge remoteUrl的parameters参数
     public static URL mergeUrl(URL remoteUrl, Map<String, String> localMap) {
         Map<String, String> map = new HashMap<String, String>();
         Map<String, String> remoteMap = remoteUrl.getParameters();
@@ -91,14 +92,12 @@ public class ClusterUtils {
             // Combine filters and listeners on Provider and Consumer
             String remoteFilter = remoteMap.get(Constants.REFERENCE_FILTER_KEY);
             String localFilter = localMap.get(Constants.REFERENCE_FILTER_KEY);
-            if (remoteFilter != null && remoteFilter.length() > 0
-                    && localFilter != null && localFilter.length() > 0) {
+            if (remoteFilter != null && remoteFilter.length() > 0 && localFilter != null && localFilter.length() > 0) {
                 localMap.put(Constants.REFERENCE_FILTER_KEY, remoteFilter + "," + localFilter);
             }
             String remoteListener = remoteMap.get(Constants.INVOKER_LISTENER_KEY);
             String localListener = localMap.get(Constants.INVOKER_LISTENER_KEY);
-            if (remoteListener != null && remoteListener.length() > 0
-                    && localListener != null && localListener.length() > 0) {
+            if (remoteListener != null && remoteListener.length() > 0 && localListener != null && localListener.length() > 0) {
                 localMap.put(Constants.INVOKER_LISTENER_KEY, remoteListener + "," + localListener);
             }
         }
