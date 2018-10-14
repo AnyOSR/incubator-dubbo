@@ -46,6 +46,8 @@ public class ClassHelper {
     private static final Map<Class<?>, Class<?>> primitiveWrapperTypeMap = new HashMap<Class<?>, Class<?>>(8);
 
     static {
+
+        //八种基本类型
         primitiveWrapperTypeMap.put(Boolean.class, boolean.class);
         primitiveWrapperTypeMap.put(Byte.class, byte.class);
         primitiveWrapperTypeMap.put(Character.class, char.class);
@@ -55,19 +57,18 @@ public class ClassHelper {
         primitiveWrapperTypeMap.put(Long.class, long.class);
         primitiveWrapperTypeMap.put(Short.class, short.class);
 
+        //基本类型 以及 基本类型数组 class
         Set<Class<?>> primitiveTypeNames = new HashSet<Class<?>>(16);
         primitiveTypeNames.addAll(primitiveWrapperTypeMap.values());
-        primitiveTypeNames.addAll(Arrays
-                .asList(new Class<?>[]{boolean[].class, byte[].class, char[].class, double[].class,
-                        float[].class, int[].class, long[].class, short[].class}));
+        primitiveTypeNames.addAll(Arrays.asList(new Class<?>[]{boolean[].class, byte[].class, char[].class, double[].class, float[].class, int[].class, long[].class, short[].class}));
+
         for (Iterator<Class<?>> it = primitiveTypeNames.iterator(); it.hasNext(); ) {
             Class<?> primitiveClass = (Class<?>) it.next();
             primitiveTypeNameMap.put(primitiveClass.getName(), primitiveClass);
         }
     }
 
-    public static Class<?> forNameWithThreadContextClassLoader(String name)
-            throws ClassNotFoundException {
+    public static Class<?> forNameWithThreadContextClassLoader(String name) throws ClassNotFoundException {
         return forName(name, Thread.currentThread().getContextClassLoader());
     }
 
@@ -139,10 +140,13 @@ public class ClassHelper {
      * @throws LinkageError           if the class file could not be loaded
      * @see Class#forName(String, boolean, ClassLoader)
      */
-    public static Class<?> forName(String name, ClassLoader classLoader)
-            throws ClassNotFoundException, LinkageError {
+    //基本类型
+    //object
+    //数组
+    public static Class<?> forName(String name, ClassLoader classLoader) throws ClassNotFoundException, LinkageError {
 
         Class<?> clazz = resolvePrimitiveClassName(name);
+        //是基本类型则直接返回
         if (clazz != null) {
             return clazz;
         }
@@ -150,21 +154,23 @@ public class ClassHelper {
         // "java.lang.String[]" style arrays
         if (name.endsWith(ARRAY_SUFFIX)) {
             String elementClassName = name.substring(0, name.length() - ARRAY_SUFFIX.length());
-            Class<?> elementClass = forName(elementClassName, classLoader);
+            Class<?> elementClass = forName(elementClassName, classLoader);   //减掉了一层[] .+[]
             return Array.newInstance(elementClass, 0).getClass();
         }
 
         // "[Ljava.lang.String;" style arrays
         int internalArrayMarker = name.indexOf(INTERNAL_ARRAY_PREFIX);
+        //出现了[L  object数组
         if (internalArrayMarker != -1 && name.endsWith(";")) {
             String elementClassName = null;
+            //开头出现
             if (internalArrayMarker == 0) {
-                elementClassName = name
-                        .substring(INTERNAL_ARRAY_PREFIX.length(), name.length() - 1);
+                elementClassName = name.substring(INTERNAL_ARRAY_PREFIX.length(), name.length() - 1);
+            //中间出现，且开头为[ 数组
             } else if (name.startsWith("[")) {
                 elementClassName = name.substring(1);
             }
-            Class<?> elementClass = forName(elementClassName, classLoader);
+            Class<?> elementClass = forName(elementClassName, classLoader);  //拔掉一层[L 或者 [
             return Array.newInstance(elementClass, 0).getClass();
         }
 
@@ -187,6 +193,9 @@ public class ClassHelper {
      * @return the primitive class, or <code>null</code> if the name does not
      * denote a primitive class or primitive array class
      */
+    //根据name找到其基本类型
+    //不是基本类型则返回null
+    //否则返回对应的class
     public static Class<?> resolvePrimitiveClassName(String name) {
         Class<?> result = null;
         // Most class names will be quite long, considering that they

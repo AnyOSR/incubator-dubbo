@@ -94,7 +94,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
     private transient volatile boolean unexported;
 
-    private volatile String generic;
+    private volatile String generic;    //这他妈是干嘛的。。
 
     public ServiceConfig() {
     }
@@ -229,6 +229,8 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             throw new IllegalStateException("<dubbo:service interface=\"\" /> interface not allow null!");
         }
         checkDefault();
+
+        //没有则赋值  优先级 provider  module  application
         if (provider != null) {
             if (application == null) {
                 application = provider.getApplication();
@@ -269,8 +271,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             }
         } else {
             try {
-                interfaceClass = Class.forName(interfaceName, true, Thread.currentThread()
-                        .getContextClassLoader());
+                interfaceClass = Class.forName(interfaceName, true, Thread.currentThread().getContextClassLoader());
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException(e.getMessage(), e);
             }
@@ -325,9 +326,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             throw new IllegalStateException("ref not allow null!");
         }
         if (!interfaceClass.isInstance(ref)) {
-            throw new IllegalStateException("The class "
-                    + ref.getClass().getName() + " unimplemented interface "
-                    + interfaceClass + "!");
+            throw new IllegalStateException("The class " + ref.getClass().getName() + " unimplemented interface " + interfaceClass + "!");
         }
     }
 
@@ -705,8 +704,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     }
 
     private void checkProtocol() {
-        if ((protocols == null || protocols.isEmpty())
-                && provider != null) {
+        if ((protocols == null || protocols.isEmpty()) && provider != null) {
             setProtocols(provider.getProtocols());
         }
         // backward compatibility

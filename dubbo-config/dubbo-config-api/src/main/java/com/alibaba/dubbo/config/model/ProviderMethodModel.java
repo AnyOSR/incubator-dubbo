@@ -48,8 +48,12 @@ public class ProviderMethodModel {
         return serviceName;
     }
 
+    //根据method
+    //构造入参class数组的Name，并返回
     private static String[] getArgTypes(Method method) {
         String[] methodArgTypes = new String[0];
+
+        //method的入参类型
         Class<?>[] parameterTypes = method.getParameterTypes();
         if (parameterTypes.length > 0) {
             methodArgTypes = new String[parameterTypes.length];

@@ -28,6 +28,7 @@ import java.util.Map;
 public class ProviderModel {
     private final String serviceName;
     private final Object serviceInstance;
+
     private final ServiceConfig metadata;
     private final Map<String, List<ProviderMethodModel>> methods = new HashMap<String, List<ProviderMethodModel>>();
 
@@ -76,6 +77,7 @@ public class ProviderModel {
         return null;
     }
 
+    //根据metadata属性构造methods属性
     private void initMethod() {
         Method[] methodsToExport = null;
         methodsToExport = metadata.getInterfaceClass().getMethods();
@@ -83,6 +85,7 @@ public class ProviderModel {
         for (Method method : methodsToExport) {
             method.setAccessible(true);
 
+            //构造method
             List<ProviderMethodModel> methodModels = methods.get(method.getName());
             if (methodModels == null) {
                 methodModels = new ArrayList<ProviderMethodModel>(1);
