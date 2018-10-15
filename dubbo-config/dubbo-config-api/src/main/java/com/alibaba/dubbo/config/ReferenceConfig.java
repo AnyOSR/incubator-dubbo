@@ -189,6 +189,9 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
     }
 
     //初始化
+    //invoker = refprotocol.refer(interfaceClass, url)
+    //proxyFactory.getProxy(invoker)
+    //代理对象
     private void init() {
         if (initialized) {
             return;

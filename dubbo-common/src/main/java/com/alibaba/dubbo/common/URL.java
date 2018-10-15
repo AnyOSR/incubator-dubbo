@@ -945,8 +945,7 @@ public final class URL implements Serializable {
     }
 
     public URL addParameterIfAbsent(String key, String value) {
-        if (key == null || key.length() == 0
-                || value == null || value.length() == 0) {
+        if (key == null || key.length() == 0 || value == null || value.length() == 0) {
             return this;
         }
         if (hasParameter(key)) {

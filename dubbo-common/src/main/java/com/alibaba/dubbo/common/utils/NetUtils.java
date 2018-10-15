@@ -97,6 +97,7 @@ public class NetUtils {
         return port;
     }
 
+    //是否为无效port
     public static boolean isInvalidPort(int port) {
         return port <= MIN_PORT || port > MAX_PORT;
     }
@@ -115,12 +116,9 @@ public class NetUtils {
         return "0.0.0.0".equals(host);
     }
 
+    //是否是一个无效的localhost
     public static boolean isInvalidLocalHost(String host) {
-        return host == null
-                || host.length() == 0
-                || host.equalsIgnoreCase("localhost")
-                || host.equals("0.0.0.0")
-                || (LOCAL_IP_PATTERN.matcher(host).matches());
+        return host == null || host.length() == 0 || host.equalsIgnoreCase("localhost") || host.equals("0.0.0.0") || (LOCAL_IP_PATTERN.matcher(host).matches());
     }
 
     public static boolean isValidLocalHost(String host) {
@@ -136,10 +134,7 @@ public class NetUtils {
         if (address == null || address.isLoopbackAddress())
             return false;
         String name = address.getHostAddress();
-        return (name != null
-                && !ANYHOST.equals(name)
-                && !LOCALHOST.equals(name)
-                && IP_PATTERN.matcher(name).matches());
+        return (name != null && !ANYHOST.equals(name) && !LOCALHOST.equals(name) && IP_PATTERN.matcher(name).matches());
     }
 
     public static String getLocalHost() {

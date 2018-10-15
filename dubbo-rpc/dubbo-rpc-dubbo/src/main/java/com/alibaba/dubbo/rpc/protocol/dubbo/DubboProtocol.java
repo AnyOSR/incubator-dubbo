@@ -240,8 +240,7 @@ public class DubboProtocol extends AbstractProtocol {
             String stubServiceMethods = url.getParameter(Constants.STUB_EVENT_METHODS_KEY);
             if (stubServiceMethods == null || stubServiceMethods.length() == 0) {
                 if (logger.isWarnEnabled()) {
-                    logger.warn(new IllegalStateException("consumer [" + url.getParameter(Constants.INTERFACE_KEY) +
-                            "], has set stubproxy support event ,but no stub methods founded."));
+                    logger.warn(new IllegalStateException("consumer [" + url.getParameter(Constants.INTERFACE_KEY) + "], has set stubproxy support event ,but no stub methods founded."));
                 }
             } else {
                 stubServiceMethodsMap.put(url.getServiceKey(), stubServiceMethods);
