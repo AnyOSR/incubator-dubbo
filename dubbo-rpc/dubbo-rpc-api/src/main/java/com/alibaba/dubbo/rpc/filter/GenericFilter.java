@@ -70,28 +70,21 @@ public class GenericFilter implements Filter {
                     generic = RpcContext.getContext().getAttachment(Constants.GENERIC_KEY);
                 }
 
-                if (StringUtils.isEmpty(generic)
-                        || ProtocolUtils.isDefaultGenericSerialization(generic)) {
+                if (StringUtils.isEmpty(generic) || ProtocolUtils.isDefaultGenericSerialization(generic)) {
                     args = PojoUtils.realize(args, params, method.getGenericParameterTypes());
                 } else if (ProtocolUtils.isJavaGenericSerialization(generic)) {
                     for (int i = 0; i < args.length; i++) {
                         if (byte[].class == args[i].getClass()) {
                             try {
                                 UnsafeByteArrayInputStream is = new UnsafeByteArrayInputStream((byte[]) args[i]);
-                                args[i] = ExtensionLoader.getExtensionLoader(Serialization.class)
-                                        .getExtension(Constants.GENERIC_SERIALIZATION_NATIVE_JAVA)
-                                        .deserialize(null, is).readObject();
+                                args[i] = ExtensionLoader.getExtensionLoader(Serialization.class).getExtension(Constants.GENERIC_SERIALIZATION_NATIVE_JAVA).deserialize(null, is).readObject();
                             } catch (Exception e) {
                                 throw new RpcException("Deserialize argument [" + (i + 1) + "] failed.", e);
                             }
                         } else {
                             throw new RpcException(
-                                    "Generic serialization [" +
-                                            Constants.GENERIC_SERIALIZATION_NATIVE_JAVA +
-                                            "] only support message type " +
-                                            byte[].class +
-                                            " and your message type is " +
-                                            args[i].getClass());
+                                    "Generic serialization [" + Constants.GENERIC_SERIALIZATION_NATIVE_JAVA +
+                                            "] only support message type " + byte[].class + " and your message type is " + args[i].getClass());
                         }
                     }
                 } else if (ProtocolUtils.isBeanGenericSerialization(generic)) {
@@ -102,24 +95,19 @@ public class GenericFilter implements Filter {
                             throw new RpcException(
                                     "Generic serialization [" +
                                             Constants.GENERIC_SERIALIZATION_BEAN +
-                                            "] only support message type " +
-                                            JavaBeanDescriptor.class.getName() +
-                                            " and your message type is " +
-                                            args[i].getClass().getName());
+                                            "] only support message type " + JavaBeanDescriptor.class.getName() +
+                                            " and your message type is " + args[i].getClass().getName());
                         }
                     }
                 }
                 Result result = invoker.invoke(new RpcInvocation(method, args, inv.getAttachments()));
-                if (result.hasException()
-                        && !(result.getException() instanceof GenericException)) {
+                if (result.hasException() && !(result.getException() instanceof GenericException)) {
                     return new RpcResult(new GenericException(result.getException()));
                 }
                 if (ProtocolUtils.isJavaGenericSerialization(generic)) {
                     try {
                         UnsafeByteArrayOutputStream os = new UnsafeByteArrayOutputStream(512);
-                        ExtensionLoader.getExtensionLoader(Serialization.class)
-                                .getExtension(Constants.GENERIC_SERIALIZATION_NATIVE_JAVA)
-                                .serialize(null, os).writeObject(result.getValue());
+                        ExtensionLoader.getExtensionLoader(Serialization.class).getExtension(Constants.GENERIC_SERIALIZATION_NATIVE_JAVA).serialize(null, os).writeObject(result.getValue());
                         return new RpcResult(os.toByteArray());
                     } catch (IOException e) {
                         throw new RpcException("Serialize result failed.", e);

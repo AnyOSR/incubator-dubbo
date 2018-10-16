@@ -94,14 +94,20 @@ public final class ReflectUtils {
 
     public static final Class<?>[] EMPTY_CLASS_ARRAY = new Class<?>[0];
 
+    //非捕获组 java变量命名规则
     public static final String JAVA_IDENT_REGEX = "(?:[_$a-zA-Z][_$a-zA-Z0-9]*)";
 
     public static final String JAVA_NAME_REGEX = "(?:" + JAVA_IDENT_REGEX + "(?:\\." + JAVA_IDENT_REGEX + ")*)";
 
+    // L IDENT /IDENT  ;
     public static final String CLASS_DESC = "(?:L" + JAVA_IDENT_REGEX + "(?:\\/" + JAVA_IDENT_REGEX + ")*;)";
 
+    // VZBCDFIJS void boolean byte等基本类型
+    // [Z CLASS_DESC
+    //基本类型数组 对象数组
     public static final String ARRAY_DESC = "(?:\\[+(?:(?:[VZBCDFIJS])|" + CLASS_DESC + "))";
 
+    //基本类型 对象 数组
     public static final String DESC_REGEX = "(?:(?:[VZBCDFIJS])|" + CLASS_DESC + "|" + ARRAY_DESC + ")";
 
     public static final Pattern DESC_PATTERN = Pattern.compile(DESC_REGEX);
@@ -110,10 +116,15 @@ public final class ReflectUtils {
 
     public static final Pattern METHOD_DESC_PATTERN = Pattern.compile(METHOD_DESC_REGEX);
 
+    //  get 第一个group ()  第二个分组group
+    //第一个分组是属性名 第二个分组是返回类型
     public static final Pattern GETTER_METHOD_DESC_PATTERN = Pattern.compile("get([A-Z][_a-zA-Z0-9]*)\\(\\)(" + DESC_REGEX + ")");
 
+    //set (DESC_REGEX) 返回类型为void
+    //第一个分组是property 第二个参数是 类型
     public static final Pattern SETTER_METHOD_DESC_PATTERN = Pattern.compile("set([A-Z][_a-zA-Z0-9]*)\\((" + DESC_REGEX + ")\\)V");
 
+    //is has can () 返回类型为boolean
     public static final Pattern IS_HAS_CAN_METHOD_DESC_PATTERN = Pattern.compile("(?:is|has|can)([A-Z][_a-zA-Z0-9]*)\\(\\)Z");
 
     private static final ConcurrentMap<String, Class<?>> DESC_CLASS_CACHE = new ConcurrentHashMap<String, Class<?>>();
@@ -230,6 +241,8 @@ public final class ReflectUtils {
      * @param c class.
      * @return name.
      */
+    //如果c不是数组类，直接返回c.getName()
+    //如果是数组类，返回c.getName()+([])
     public static String getName(Class<?> c) {
         if (c.isArray()) {
             StringBuilder sb = new StringBuilder();
@@ -335,6 +348,7 @@ public final class ReflectUtils {
      * @return desc.
      * @throws NotFoundException
      */
+    //获取一个类的虚拟机字节码描述
     public static String getDesc(Class<?> c) {
         StringBuilder ret = new StringBuilder();
 
@@ -388,6 +402,7 @@ public final class ReflectUtils {
      * @param m method.
      * @return desc.
      */
+    //methodName (入参) 返回类型
     public static String getDesc(final Method m) {
         StringBuilder ret = new StringBuilder(m.getName()).append('(');
         Class<?>[] parameterTypes = m.getParameterTypes();
@@ -420,6 +435,8 @@ public final class ReflectUtils {
      * @param m method.
      * @return desc.
      */
+    // (ILjava/lang/String;B)V
+    //(入参的字节码表示)返回类型的字节码表示
     public static String getDescWithoutMethodName(Method m) {
         StringBuilder ret = new StringBuilder();
         ret.append('(');

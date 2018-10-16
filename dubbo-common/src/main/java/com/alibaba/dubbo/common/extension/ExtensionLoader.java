@@ -60,6 +60,12 @@ import java.util.regex.Pattern;
 //getActivateExtension
 //getDefaultExtension
 //getExtension
+//
+// 整体逻辑是 调用getExtension(className)时，假如是首次创建，会createExtension(className)
+// 创建extension时 会根据className对应的类名创建一个该类的实例，然后遍历该类的set方法，进行set注入
+// set注入时，会利用objectFactory去获取相关依赖属性值，如果是从dubbo spi中获取的依赖值，则获取到的都是dubbo中的AdaptiveExtension
+// 注入，完成后，假如有wrapper类，会利用当前类的实例作为wrapperClass 构造函数的实例，构造一个wrapperClass的实例，然后再注入，如果还有wrapperClass，则继续
+// 返回最后的一个wrapperClass的实例
 public class ExtensionLoader<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(ExtensionLoader.class);
@@ -74,6 +80,8 @@ public class ExtensionLoader<T> {
 
     private final Class<?> type;   //只能为interface
 
+    //提供了一个入口来从spring上下文或者dubbo spi中寻找extension
+    //假如是从dubbo中获取的extension，获取到的将是AdaptiveExtension
     private final ExtensionFactory objectFactory;
 
     private final ConcurrentMap<String, Holder<Object>> cachedInstances = new ConcurrentHashMap<String, Holder<Object>>();
@@ -111,6 +119,7 @@ public class ExtensionLoader<T> {
         //将ExtensionFactory对应的 适配器类 赋值给当前的objectFactory
         //为什么objectFactory一开始都是AdaptiveExtensionFactory的实例？
         //因为objectFactory只是一种获取extension的方式，到现在为止，要不从spring上下文中获取，要不从dubbo spi中获取，但这儿有必要这样实现吗？
+        //上帝能创造万物，上帝是谁创造的？hh 上帝是硬编码的基础设施
         objectFactory = (type == ExtensionFactory.class ? null : ExtensionLoader.getExtensionLoader(ExtensionFactory.class).getAdaptiveExtension());
     }
 
@@ -520,6 +529,7 @@ public class ExtensionLoader<T> {
         return new IllegalStateException(buf.toString());
     }
 
+    //创建扩展
     @SuppressWarnings("unchecked")
     private T createExtension(String name) {
         //根据name查找某个实现类
@@ -538,16 +548,20 @@ public class ExtensionLoader<T> {
             injectExtension(instance);
 
             //wrapper包装，有点类似于装饰器模式
+            //cachedWrapperClasses实际上是一个ConcurrentHashSet，ConcurrentHashSet的底层实际上是一个ConcurrentHashMap，遍历的顺序和put的顺序可能不一致啊
             Set<Class<?>> wrapperClasses = cachedWrapperClasses;
             if (wrapperClasses != null && !wrapperClasses.isEmpty()) {
+
+                //如果有wrapperClass，需要返回被wrapper的class object实例
+                //配置配置文件时，可能需要注意注意wrapperclass的顺序？
+                //解析的时候是逐行解析的，
                 for (Class<?> wrapperClass : wrapperClasses) {
                     instance = injectExtension((T) wrapperClass.getConstructor(type).newInstance(instance));
                 }
             }
             return instance;
         } catch (Throwable t) {
-            throw new IllegalStateException("Extension instance(name: " + name + ", class: " +
-                    type + ")  could not be instantiated: " + t.getMessage(), t);
+            throw new IllegalStateException("Extension instance(name: " + name + ", class: " + type + ")  could not be instantiated: " + t.getMessage(), t);
         }
     }
 
@@ -559,9 +573,7 @@ public class ExtensionLoader<T> {
             if (objectFactory != null) {
                 //遍历以set开头、参数为1个且修饰符为public的方法
                 for (Method method : instance.getClass().getMethods()) {
-                    if (method.getName().startsWith("set")
-                            && method.getParameterTypes().length == 1
-                            && Modifier.isPublic(method.getModifiers())) {
+                    if (method.getName().startsWith("set") && method.getParameterTypes().length == 1 && Modifier.isPublic(method.getModifiers())) {
 
                         //找到该参数的class类型
                         Class<?> pt = method.getParameterTypes()[0];
@@ -569,14 +581,15 @@ public class ExtensionLoader<T> {
                             //找到该方法设置的属性
                             String property = method.getName().length() > 3 ? method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4) : "";
                             //获取依赖的实例
+                            //返回的object都是AdapativeInstance,如果是通过spi的方式的话
+                            //objectFactory都是AdaptiveExtensionFactory的实例
                             Object object = objectFactory.getExtension(pt, property);
                             if (object != null) {
                                 //set注入
                                 method.invoke(instance, object);
                             }
                         } catch (Exception e) {
-                            logger.error("fail to inject via method " + method.getName()
-                                    + " of interface " + type.getName() + ": " + e.getMessage(), e);
+                            logger.error("fail to inject via method " + method.getName() + " of interface " + type.getName() + ": " + e.getMessage(), e);
                         }
                     }
                 }
@@ -753,12 +766,14 @@ public class ExtensionLoader<T> {
             //或者extension注解写了@extension(a,b,c)
             String[] names = NAME_SEPARATOR.split(name);
             if (names != null && names.length > 0) {
+
                 //类上获取activate注解
                 Activate activate = clazz.getAnnotation(Activate.class);
                 if (activate != null) {         //如果类上有activate注解
                     //设置cachedActivates
                     cachedActivates.put(names[0], activate);
                 }
+
                 for (String n : names) {
                     if (!cachedNames.containsKey(clazz)) {
                         //设置cachedNames

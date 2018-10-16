@@ -47,11 +47,28 @@ public class ProtocolFilterWrapper implements Protocol {
         Invoker<T> last = invoker;
         List<Filter> filters = ExtensionLoader.getExtensionLoader(Filter.class).getActivateExtension(invoker.getUrl(), key, group);
         if (!filters.isEmpty()) {
+            //这里为什么从最后开始遍历？
+            //因为先加入到chain中的最后调用，要想按照书写顺序调用chain，就要倒着遍历filter
             for (int i = filters.size() - 1; i >= 0; i--) {
                 final Filter filter = filters.get(i);
                 final Invoker<T> next = last;
                 last = new Invoker<T>() {
 
+                    //闭包？
+                    //怎么将这个链调用连接起来，每个filter的实现的invoke方法的最后，都必须调用next.invoke(invocation)？
+                    //刚开始生成了一个匿名的Invoker对象 $invoke0，这个 $invoke0 的invoke方法，实际上调用了最后一个filter对象的invoke方法，该方法的第一个参数为最外层传进来的invoke对象
+                    //然后又生成了一个匿名的Invoker对象 $invoke1，这个 $invoke1 的invoke方法，实际上调用了倒数第二个filter对象的invoke方法，该方法的第一个参数是上次生成的匿名对象 $invoke0
+                    //........一次类推  最后返回一个匿名的Invoke实例 $invoke(filters.size()-1)
+                    //当调用 $invoke(filters.size()-1) 的invoke方法时，会调用第一个filter的invoke方法，而$(filters.size()-1)实例invoke方法的第一个参数是$invoke(filters.size()-2)
+                    //当调用 $invoke1 的invoke方法时，会调用倒数第二个filter对象的invoke方法，该方法的第一个参数是匿名对象 $invoke0
+                    //当调用 $invoke0 的invoke方法时，会调用倒数第一个filter对象的invoke方法，该方法的第一个参数是最外层对象 invoke
+                    //为了这个调用链被调用下去，在filter实现的invoke(Invoke v1,Invocation V2 )方面里面，最后必须手动调用v1.invoke(v2)
+                    @Override
+                    public Result invoke(Invocation invocation) throws RpcException {
+                        return filter.invoke(next, invocation);
+                    }
+
+                    //都是最外层的invoke，且invoke没有被赋值过
                     @Override
                     public Class<T> getInterface() {
                         return invoker.getInterface();
@@ -65,11 +82,6 @@ public class ProtocolFilterWrapper implements Protocol {
                     @Override
                     public boolean isAvailable() {
                         return invoker.isAvailable();
-                    }
-
-                    @Override
-                    public Result invoke(Invocation invocation) throws RpcException {
-                        return filter.invoke(next, invocation);
                     }
 
                     @Override

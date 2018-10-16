@@ -35,8 +35,7 @@ import java.util.Map;
 public class TokenFilter implements Filter {
 
     @Override
-    public Result invoke(Invoker<?> invoker, Invocation inv)
-            throws RpcException {
+    public Result invoke(Invoker<?> invoker, Invocation inv) throws RpcException {
         String token = invoker.getUrl().getParameter(Constants.TOKEN_KEY);
         if (ConfigUtils.isNotEmpty(token)) {
             Class<?> serviceType = invoker.getInterface();

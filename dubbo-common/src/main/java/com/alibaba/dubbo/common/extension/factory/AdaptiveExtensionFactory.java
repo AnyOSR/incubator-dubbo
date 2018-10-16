@@ -48,6 +48,8 @@ public class AdaptiveExtensionFactory implements ExtensionFactory {
         factories = Collections.unmodifiableList(list);
     }
 
+    //从spring上下文中获取
+    //或者用dubbo spi获取adaptiveInstance
     @Override
     public <T> T getExtension(Class<T> type, String name) {
         for (ExtensionFactory factory : factories) {

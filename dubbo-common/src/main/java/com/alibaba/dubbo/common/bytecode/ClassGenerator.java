@@ -18,40 +18,31 @@ package com.alibaba.dubbo.common.bytecode;
 
 import com.alibaba.dubbo.common.utils.ClassHelper;
 import com.alibaba.dubbo.common.utils.ReflectUtils;
-
-import javassist.CannotCompileException;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtConstructor;
-import javassist.CtField;
-import javassist.CtMethod;
-import javassist.CtNewConstructor;
-import javassist.CtNewMethod;
-import javassist.LoaderClassPath;
-import javassist.NotFoundException;
+import javassist.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.ProtectionDomain;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * ClassGenerator
  */
+// http://www.javassist.org/tutorial/tutorial.html
 public final class ClassGenerator {
     private static final AtomicLong CLASS_NAME_COUNTER = new AtomicLong(0);
     private static final String SIMPLE_NAME_TAG = "<init>";
+
+    //static字段
+    //一个classloader对应于一个ClassPool
+    //javaassist
     private static final Map<ClassLoader, ClassPool> POOL_MAP = new ConcurrentHashMap<ClassLoader, ClassPool>(); //ClassLoader - ClassPool
     private ClassPool mPool;
     private CtClass mCtc;
+
     private String mClassName, mSuperClass;
     private Set<String> mInterfaces;
     private List<String> mFields, mConstructors, mMethods;
@@ -74,10 +65,12 @@ public final class ClassGenerator {
         return new ClassGenerator(getClassPool(loader));
     }
 
+    //判断是否是一个动态类
     public static boolean isDynamicClass(Class<?> cl) {
         return ClassGenerator.DC.class.isAssignableFrom(cl);
     }
 
+    //获取classPool
     public static ClassPool getClassPool(ClassLoader loader) {
         if (loader == null)
             return ClassPool.getDefault();
@@ -102,11 +95,13 @@ public final class ClassGenerator {
         return mClassName;
     }
 
+    //一个className
     public ClassGenerator setClassName(String name) {
         mClassName = name;
         return this;
     }
 
+    //多个接口
     public ClassGenerator addInterface(String cn) {
         if (mInterfaces == null)
             mInterfaces = new HashSet<String>();
@@ -139,6 +134,7 @@ public final class ClassGenerator {
         return addField(name, mod, type, null);
     }
 
+    //public type name = def ;
     public ClassGenerator addField(String name, int mod, Class<?> type, String def) {
         StringBuilder sb = new StringBuilder();
         sb.append(modifier(mod)).append(' ').append(ReflectUtils.getName(type)).append(' ');
@@ -162,6 +158,14 @@ public final class ClassGenerator {
         return addMethod(name, mod, rt, pts, null, body);
     }
 
+    //public rt name( pts[0] arg0 , pts[i] argi) throws ets[0],ets[i] { body}
+    //name 方法名
+    //mod 修饰符
+    //rt 返回类型 returnType
+    //pts 入参类型 parameterType
+    //ets 声明异常类型 execptionType
+    //body 方法体
+    //换下参数位置是不是更好？~~
     public ClassGenerator addMethod(String name, int mod, Class<?> rt, Class<?>[] pts, Class<?>[] ets, String body) {
         StringBuilder sb = new StringBuilder();
         sb.append(modifier(mod)).append(' ').append(ReflectUtils.getName(rt)).append(' ').append(name);
@@ -190,8 +194,12 @@ public final class ClassGenerator {
         return this;
     }
 
+    //根据method拼装一个key
+    //然后存入mCopyMethods
+    //能保证key唯一？是不是应该加入classloader的信息？
     public ClassGenerator addMethod(String name, Method m) {
         String desc = name + ReflectUtils.getDescWithoutMethodName(m);
+        //加个：干嘛？
         addMethod(':' + desc);
         if (mCopyMethods == null)
             mCopyMethods = new ConcurrentHashMap<String, Method>(8);
@@ -210,6 +218,7 @@ public final class ClassGenerator {
         return addConstructor(mod, pts, null, body);
     }
 
+    //public <init>(pts[0] arg0,pts[i] argi) throws ets[0],ets[i]{body}
     public ClassGenerator addConstructor(int mod, Class<?>[] pts, Class<?>[] ets, String body) {
         StringBuilder sb = new StringBuilder();
         sb.append(modifier(mod)).append(' ').append(SIMPLE_NAME_TAG);
@@ -262,8 +271,7 @@ public final class ClassGenerator {
         try {
             CtClass ctcs = mSuperClass == null ? null : mPool.get(mSuperClass);
             if (mClassName == null)
-                mClassName = (mSuperClass == null || javassist.Modifier.isPublic(ctcs.getModifiers())
-                        ? ClassGenerator.class.getName() : mSuperClass + "$sc") + id;
+                mClassName = (mSuperClass == null || javassist.Modifier.isPublic(ctcs.getModifiers()) ? ClassGenerator.class.getName() : mSuperClass + "$sc") + id;
             mCtc = mPool.makeClass(mClassName);
             if (mSuperClass != null)
                 mCtc.setSuperclass(ctcs);
@@ -291,6 +299,11 @@ public final class ClassGenerator {
                         mCtc.addConstructor(CtNewConstructor.make(code.replaceFirst(SIMPLE_NAME_TAG, sn[sn.length - 1]), mCtc));
                     }
                 }
+            }
+            try {
+                mCtc.writeFile("D:\\idea_workspace\\incubator-dubbo\\dubbo-common\\src\\main\\java");
+            } catch (Exception e) {
+
             }
             return mCtc.toClass(loader, pd);
         } catch (RuntimeException e) {
@@ -324,6 +337,7 @@ public final class ClassGenerator {
         return getCtClass(c.getDeclaringClass()).getConstructor(ReflectUtils.getDesc(c));
     }
 
+    //动态类标志
     public static interface DC {
     } // dynamic class tag interface.
 }

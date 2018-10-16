@@ -24,8 +24,33 @@ import java.util.Date;
 
 public class DemoServiceImpl implements DemoService {
 
+    public int int1;
+
+    public Object object1;
+
+    public Object getObject1() {
+        return object1;
+    }
+
+    public int getInt1() {
+        return int1;
+    }
+
+    public void setInt1(int int1) {
+        this.int1 = int1;
+    }
+
+    public void setObject1(Object object1) {
+        this.object1 = object1;
+    }
+
     @Override
     public String sayHello(String name) {
+        System.out.println("[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "] Hello " + name + ", request from consumer: " + RpcContext.getContext().getRemoteAddress());
+        return "Hello " + name + ", response from provider: " + RpcContext.getContext().getLocalAddress();
+    }
+
+    public String sayHello(String name,String s1,Object o) {
         System.out.println("[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "] Hello " + name + ", request from consumer: " + RpcContext.getContext().getRemoteAddress());
         return "Hello " + name + ", response from provider: " + RpcContext.getContext().getLocalAddress();
     }
