@@ -67,6 +67,7 @@ public class ProtocolFilterWrapper implements Protocol {
                     //invoke的invoke方法回去调用 filter实现 的invoke(Invoker<?> invoker, Invocation invocation)方法，在这个方法里面可以写自己filter的逻辑
                     //每一个invoke对象的invoke方法调用 都会引发一个filter实现的invoke方法被调用(invoke对象的invoke方法调用 等效于 filter实现的invoke方法被调用)
                     //而为了这个调用能传递下去，引发下一个filter的调用(即invoke的invoke方法被调用)，只能在filter的实现里面去触发，可以抽象成一个模式A B
+                    //不需要next指针 对外表现还是一个invoke，而不是数组 入参类型没有和返回类型相同的
                     @Override
                     public Result invoke(Invocation invocation) throws RpcException {
                         return filter.invoke(next, invocation);
