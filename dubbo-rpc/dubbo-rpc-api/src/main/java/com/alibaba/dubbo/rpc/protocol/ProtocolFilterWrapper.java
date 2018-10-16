@@ -63,6 +63,10 @@ public class ProtocolFilterWrapper implements Protocol {
                     //当调用 $invoke1 的invoke方法时，会调用倒数第二个filter对象的invoke方法，该方法的第一个参数是匿名对象 $invoke0
                     //当调用 $invoke0 的invoke方法时，会调用倒数第一个filter对象的invoke方法，该方法的第一个参数是最外层对象 invoke
                     //为了这个调用链被调用下去，在filter实现的invoke(Invoke v1,Invocation V2 )方面里面，最后必须手动调用v1.invoke(v2)
+                    //关键在于两部分 怎么去调用每个filter的invoke方法，以及怎么将这个调用传递下去
+                    //invoke的invoke方法回去调用 filter实现 的invoke(Invoker<?> invoker, Invocation invocation)方法，在这个方法里面可以写自己filter的逻辑
+                    //每一个invoke对象的invoke方法调用 都会引发一个filter实现的invoke方法被调用(invoke对象的invoke方法调用 等效于 filter实现的invoke方法被调用)
+                    //而为了这个调用能传递下去，引发下一个filter的调用(即invoke的invoke方法被调用)，只能在filter的实现里面去触发，可以抽象成一个模式A B
                     @Override
                     public Result invoke(Invocation invocation) throws RpcException {
                         return filter.invoke(next, invocation);
