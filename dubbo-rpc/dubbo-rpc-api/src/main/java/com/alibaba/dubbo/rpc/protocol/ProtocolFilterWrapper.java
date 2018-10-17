@@ -52,6 +52,7 @@ public class ProtocolFilterWrapper implements Protocol {
             for (int i = filters.size() - 1; i >= 0; i--) {
                 final Filter filter = filters.get(i);
                 final Invoker<T> next = last;
+                final Integer integer = new Integer(i);
                 last = new Invoker<T>() {
 
                     //闭包？
@@ -68,12 +69,16 @@ public class ProtocolFilterWrapper implements Protocol {
                     //每一个invoke对象的invoke方法调用 都会引发一个filter实现的invoke方法被调用(invoke对象的invoke方法调用 等效于 filter实现的invoke方法被调用)
                     //而为了这个调用能传递下去，引发下一个filter的调用(即invoke的invoke方法被调用)，只能在filter的实现里面去触发，可以抽象成一个模式A B
                     //不需要next指针 对外表现还是一个invoke，而不是数组 入参类型没有和返回类型相同的
+
+                    //调试时，生成的匿名Invoke竟然直接可见filter和next属性  这么骚气。。
                     @Override
                     public Result invoke(Invocation invocation) throws RpcException {
+                        System.out.println("正在调用第" + integer.toString()+"个filter");
                         return filter.invoke(next, invocation);
                     }
 
                     //都是最外层的invoke，且invoke没有被赋值过
+                    //生成的匿名Invoke 直接可见最外层的invoke(持有最外层invoke的引用)，骚浪贱啊。。
                     @Override
                     public Class<T> getInterface() {
                         return invoker.getInterface();

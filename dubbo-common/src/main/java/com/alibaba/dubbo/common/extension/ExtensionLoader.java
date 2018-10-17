@@ -81,7 +81,8 @@ public class ExtensionLoader<T> {
     private final Class<?> type;   //只能为interface
 
     //提供了一个入口来从spring上下文或者dubbo spi中寻找extension
-    //假如是从dubbo中获取的extension，获取到的将是AdaptiveExtension
+    //假如是从dubbo中获取的extension，获取到的将是AdaptiveExtension，并且获取到的AdaptiveExtension是单例
+    //假如有多个类A B C...分别注入了Protocol 的Protocol$Adaptive 类的属性，这多个属性将会是同一个对象 也有道理
     private final ExtensionFactory objectFactory;
 
     private final ConcurrentMap<String, Holder<Object>> cachedInstances = new ConcurrentHashMap<String, Holder<Object>>();
@@ -213,19 +214,25 @@ public class ExtensionLoader<T> {
      * @return extension list which are activated
      * @see com.alibaba.dubbo.common.extension.Activate
      */
+    //group value过滤  -default
+    //两部分
+    // 一部分是遍历cachedActivates 条件是values里面没有"-default"
+    //另一部分是遍历values，当某个name不以"-"开头且values中不包含"-value[i]"的时候
+    //
     public List<T> getActivateExtension(URL url, String[] values, String group) {
         List<T> exts = new ArrayList<T>();
         List<String> names = values == null ? new ArrayList<String>(0) : Arrays.asList(values);
         if (!names.contains(Constants.REMOVE_VALUE_PREFIX + Constants.DEFAULT_KEY)) {
             getExtensionClasses();
+            //某个实现类对应的name(类上有Activate注解)   ——————  Activate注解
             for (Map.Entry<String, Activate> entry : cachedActivates.entrySet()) {
                 String name = entry.getKey();
                 Activate activate = entry.getValue();
+                //如果group在Activate.group里面出现过
                 if (isMatchGroup(group, activate.group())) {
                     T ext = getExtension(name);
-                    if (!names.contains(name)
-                            && !names.contains(Constants.REMOVE_VALUE_PREFIX + name)
-                            && isActive(activate, url)) {
+                    //由于第二部分遍历了所有的values，所以这里有!names.contains(name) 这个条件
+                    if (!names.contains(name) && !names.contains(Constants.REMOVE_VALUE_PREFIX + name) && isActive(activate, url)) {
                         exts.add(ext);
                     }
                 }
@@ -235,9 +242,9 @@ public class ExtensionLoader<T> {
         List<T> usrs = new ArrayList<T>();
         for (int i = 0; i < names.size(); i++) {
             String name = names.get(i);
-            if (!name.startsWith(Constants.REMOVE_VALUE_PREFIX)
-                    && !names.contains(Constants.REMOVE_VALUE_PREFIX + name)) {
+            if (!name.startsWith(Constants.REMOVE_VALUE_PREFIX) && !names.contains(Constants.REMOVE_VALUE_PREFIX + name)) {
                 if (Constants.DEFAULT_KEY.equals(name)) {
+                    //如果name为default，直接continue不行么？有意义？
                     if (!usrs.isEmpty()) {
                         exts.addAll(0, usrs);
                         usrs.clear();
@@ -277,8 +284,7 @@ public class ExtensionLoader<T> {
             for (Map.Entry<String, String> entry : url.getParameters().entrySet()) {
                 String k = entry.getKey();
                 String v = entry.getValue();
-                if ((k.equals(key) || k.endsWith("." + key))
-                        && ConfigUtils.isNotEmpty(v)) {
+                if ((k.equals(key) || k.endsWith("." + key)) && ConfigUtils.isNotEmpty(v)) {
                     return true;
                 }
             }
@@ -556,6 +562,18 @@ public class ExtensionLoader<T> {
                 //配置配置文件时，可能需要注意注意wrapperclass的顺序？
                 //解析的时候是逐行解析的，
                 for (Class<?> wrapperClass : wrapperClasses) {
+                    //对于Interface A 来说，假如其有一个wrapperClass为 AWrap， 还有一个name为 "classA" 的实现类ImplementA
+                    //当调用getExtension("classA")的时候，首先找到实现类ImplementA
+                    //生成了一个ImplementA类的实例 objectImplementA
+                    //由于Interface A拥有wrapperClass AWrap ，所有会用objectImplementA作为参数，生成AWrap的实例 objectAWrap
+                    //然后对 objectAWrap 进行属性set注入
+                    //假如这时候wrapperClass AWrap有一个setA() 方法，那objectAWrap.A 是不是会赋值成Interface A的 A$Adaptive的实例
+                    //为了不出现这种状况，是不是得要求，只要是A的wrapperClass，都不能有setA(A)方法
+                    //这样就能保证对于某一个接口A来说，其(A)getExtension("name")得到的实例object，其object.A绝对不会是 A$Adaptive 的实例
+                    //只会是A的 另一个wrapperClass的实例或者是对应"name"的实现类的实例
+                    //当然，假如A里面有一个属性interface B，且是通过SPIExtensionFactory注入的，那这个A.B一定是 B$Adaptive类的实例
+                    //还是挺重要的
+                    //有待验证
                     instance = injectExtension((T) wrapperClass.getConstructor(type).newInstance(instance));
                 }
             }

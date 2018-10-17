@@ -38,6 +38,8 @@ import java.lang.reflect.Constructor;
 /**
  * StubProxyFactoryWrapper
  */
+//这是一个ProxyFactory wrapperClass
+//proxyFactory属性可能是其它ProxyFactory wrapperClass的实例或者是默认的ProxyFactory实现
 public class StubProxyFactoryWrapper implements ProxyFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StubProxyFactoryWrapper.class);
