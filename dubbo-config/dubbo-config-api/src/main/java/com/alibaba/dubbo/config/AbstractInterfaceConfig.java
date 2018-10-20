@@ -222,6 +222,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                 return null;
             }
 
+            //monitor address或者protocol不为空 必然有一个不为空
             monitor = new MonitorConfig();
             if (monitorAddress != null && monitorAddress.length() > 0) {
                 monitor.setAddress(monitorAddress);
@@ -259,10 +260,10 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
             }
             //address不为空时才能调用parseURL
             return UrlUtils.parseURL(address, map);
-        //address为空且monitor的protocol为registry，则设置入参registryURL
+
+        //address为空，则protocol不为空
+        // 且monitor的protocol为registry，则设置入参registryURL
         } else if (Constants.REGISTRY_PROTOCOL.equals(monitor.getProtocol()) && registryURL != null) {
-            //protocal怎么一个是dubbo，一个是registry
-            //this.protocol和this.parameters["protocol"]不一致没关系？
             return registryURL.setProtocol("dubbo").addParameter(Constants.PROTOCOL_KEY, "registry").addParameterAndEncoded(Constants.REFER_KEY, StringUtils.toQueryString(map));
         }
         return null;

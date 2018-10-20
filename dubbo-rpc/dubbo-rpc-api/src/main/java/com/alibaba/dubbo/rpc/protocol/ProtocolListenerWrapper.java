@@ -55,8 +55,7 @@ public class ProtocolListenerWrapper implements Protocol {
             return protocol.export(invoker);
         }
         return new ListenerExporterWrapper<T>(protocol.export(invoker),
-                Collections.unmodifiableList(ExtensionLoader.getExtensionLoader(ExporterListener.class)
-                        .getActivateExtension(invoker.getUrl(), Constants.EXPORTER_LISTENER_KEY)));
+                Collections.unmodifiableList(ExtensionLoader.getExtensionLoader(ExporterListener.class).getActivateExtension(invoker.getUrl(), Constants.EXPORTER_LISTENER_KEY)));
     }
 
     @Override
@@ -65,9 +64,7 @@ public class ProtocolListenerWrapper implements Protocol {
             return protocol.refer(type, url);
         }
         return new ListenerInvokerWrapper<T>(protocol.refer(type, url),
-                Collections.unmodifiableList(
-                        ExtensionLoader.getExtensionLoader(InvokerListener.class)
-                                .getActivateExtension(url, Constants.INVOKER_LISTENER_KEY)));
+                Collections.unmodifiableList(ExtensionLoader.getExtensionLoader(InvokerListener.class).getActivateExtension(url, Constants.INVOKER_LISTENER_KEY)));
     }
 
     @Override

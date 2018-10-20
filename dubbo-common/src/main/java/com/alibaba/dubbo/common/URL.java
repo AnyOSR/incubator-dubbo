@@ -1043,6 +1043,7 @@ public final class URL implements Serializable {
         for (String key : keys) {
             map.remove(key);
         }
+        //没有remove掉entry，则直接返回
         if (map.size() == getParameters().size()) {
             return this;
         }

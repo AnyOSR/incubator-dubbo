@@ -245,7 +245,9 @@ public class RegistryProtocol implements Protocol {
      * @param origininvoker
      * @return
      */
+    //export和providerUrl？？
     private URL getProviderUrl(final Invoker<?> origininvoker) {
+        //获取origininvoker.parameters["export"]，并decode,然后解析成URL并返回
         String export = origininvoker.getUrl().getParameterAndDecoded(Constants.EXPORT_KEY);
         if (export == null || export.length() == 0) {
             throw new IllegalArgumentException("The registry export url is null! registry: " + origininvoker.getUrl());
@@ -261,6 +263,9 @@ public class RegistryProtocol implements Protocol {
      * @param originInvoker
      * @return
      */
+    //将originInvoker.parameters["export"]解析成一个URL
+    //并remove掉parameters里面的dynamic 和 enabled
+    //返回
     private String getCacheKey(final Invoker<?> originInvoker) {
         URL providerUrl = getProviderUrl(originInvoker);
         String key = providerUrl.removeParameters("dynamic", "enabled").toFullString();
