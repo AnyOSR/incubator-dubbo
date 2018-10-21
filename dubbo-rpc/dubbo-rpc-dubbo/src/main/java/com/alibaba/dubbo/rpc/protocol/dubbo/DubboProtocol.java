@@ -55,6 +55,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * dubbo protocol support.
  */
+//对应于dubbo的protocol 单例
 public class DubboProtocol extends AbstractProtocol {
 
     public static final String NAME = "dubbo";
@@ -142,6 +143,7 @@ public class DubboProtocol extends AbstractProtocol {
             }
         }
 
+        //组装invocation
         private Invocation createInvocation(Channel channel, URL url, String methodKey) {
             String method = url.getParameter(methodKey);
             if (method == null || method.length() == 0) {
@@ -182,12 +184,12 @@ public class DubboProtocol extends AbstractProtocol {
         return exporterMap;
     }
 
+    //？？？
     private boolean isClientSide(Channel channel) {
         InetSocketAddress address = channel.getRemoteAddress();
         URL url = channel.getUrl();
         return url.getPort() == address.getPort() &&
-                NetUtils.filterLocalHost(channel.getUrl().getIp())
-                        .equals(NetUtils.filterLocalHost(address.getAddress().getHostAddress()));
+                NetUtils.filterLocalHost(channel.getUrl().getIp()).equals(NetUtils.filterLocalHost(address.getAddress().getHostAddress()));
     }
 
     Invoker<?> getInvoker(Channel channel, Invocation inv) throws RemotingException {
@@ -200,7 +202,7 @@ public class DubboProtocol extends AbstractProtocol {
         if (isStubServiceInvoke) {
             port = channel.getRemoteAddress().getPort();
         }
-        //callback
+        //callback stubservice不能共存？
         isCallBackServiceInvoke = isClientSide(channel) && !isStubServiceInvoke;
         if (isCallBackServiceInvoke) {
             path = inv.getAttachments().get(Constants.PATH_KEY) + "." + inv.getAttachments().get(Constants.CALLBACK_SERVICE_KEY);
@@ -231,6 +233,9 @@ public class DubboProtocol extends AbstractProtocol {
 
         // export service.
         String key = serviceKey(url);
+        //这里的exporterMap是Protocol类中的exporterMap，不是exporter中的map
+        //将protocol中的exporterMap赋值给exporter中的exporterMap
+        //dubboprotocol这个单实例和他产生出来的DubboExporter共享同一个exporterMap
         DubboExporter<T> exporter = new DubboExporter<T>(invoker, key, exporterMap);
         exporterMap.put(key, exporter);
 
@@ -271,15 +276,18 @@ public class DubboProtocol extends AbstractProtocol {
     }
 
     private ExchangeServer createServer(URL url) {
-        // send readonly event when server closes, it's enabled by default
+
+        //channel.readonly.sent true
         url = url.addParameterIfAbsent(Constants.CHANNEL_READONLYEVENT_SENT_KEY, Boolean.TRUE.toString());
-        // enable heartbeat by default
+        //heartbeat 60000
         url = url.addParameterIfAbsent(Constants.HEARTBEAT_KEY, String.valueOf(Constants.DEFAULT_HEARTBEAT));
+        //server netty
         String str = url.getParameter(Constants.SERVER_KEY, Constants.DEFAULT_REMOTING_SERVER);
 
         if (str != null && str.length() > 0 && !ExtensionLoader.getExtensionLoader(Transporter.class).hasExtension(str))
             throw new RpcException("Unsupported server type: " + str + ", url: " + url);
 
+        //codec dubbo
         url = url.addParameter(Constants.CODEC_KEY, DubboCodec.NAME);
         ExchangeServer server;
         try {

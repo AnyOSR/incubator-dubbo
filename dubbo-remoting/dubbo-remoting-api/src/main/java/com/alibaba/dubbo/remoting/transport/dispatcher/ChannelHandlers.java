@@ -31,6 +31,7 @@ public class ChannelHandlers {
     protected ChannelHandlers() {
     }
 
+    //增加责任  封装一些列任务
     public static ChannelHandler wrap(ChannelHandler handler, URL url) {
         return ChannelHandlers.getInstance().wrapInternal(handler, url);
     }
@@ -43,8 +44,11 @@ public class ChannelHandlers {
         INSTANCE = instance;
     }
 
+    //...无所不用其及啊 风生水起啊。。
+    //multimessage处理
+    //心跳
+    //增加了任务分发
     protected ChannelHandler wrapInternal(ChannelHandler handler, URL url) {
-        return new MultiMessageHandler(new HeartbeatHandler(ExtensionLoader.getExtensionLoader(Dispatcher.class)
-                .getAdaptiveExtension().dispatch(handler, url)));
+        return new MultiMessageHandler(new HeartbeatHandler(ExtensionLoader.getExtensionLoader(Dispatcher.class).getAdaptiveExtension().dispatch(handler, url)));
     }
 }

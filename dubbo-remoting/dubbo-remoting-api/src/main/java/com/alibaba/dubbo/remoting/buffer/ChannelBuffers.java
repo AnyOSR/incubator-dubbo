@@ -84,8 +84,7 @@ public final class ChannelBuffers {
             return EMPTY_BUFFER;
         }
 
-        ChannelBuffer buffer = new ByteBufferBackedChannelBuffer(
-                ByteBuffer.allocateDirect(capacity));
+        ChannelBuffer buffer = new ByteBufferBackedChannelBuffer(ByteBuffer.allocateDirect(capacity));
         buffer.clear();
         return buffer;
     }

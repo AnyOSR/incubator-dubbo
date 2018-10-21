@@ -39,6 +39,9 @@ public class HeaderExchanger implements Exchanger {
         return new HeaderExchangeClient(Transporters.connect(url, new DecodeHandler(new HeaderExchangeHandler(handler))), true);
     }
 
+    //DecodeHandler
+    //HeaderExchangeHandler
+    //DubboProtocol$1
     @Override
     public ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingException {
         return new HeaderExchangeServer(Transporters.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));

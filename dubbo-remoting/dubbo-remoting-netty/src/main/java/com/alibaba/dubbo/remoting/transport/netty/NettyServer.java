@@ -58,9 +58,12 @@ public class NettyServer extends AbstractServer implements Server {
     private org.jboss.netty.channel.Channel channel;
 
     public NettyServer(URL url, ChannelHandler handler) throws RemotingException {
+        //增加责任
         super(url, ChannelHandlers.wrap(handler, ExecutorUtil.setThreadName(url, SERVER_THREAD_POOL_NAME)));
     }
 
+    //监听本地端口
+    //server 通信方式
     @Override
     protected void doOpen() throws Throwable {
         NettyHelper.setNettyLoggerFactory();

@@ -46,8 +46,8 @@ public class NetUtils {
     private static final Random RANDOM = new Random(System.currentTimeMillis());
     private static final int MIN_PORT = 0;
     private static final int MAX_PORT = 65535;
-    private static final Pattern ADDRESS_PATTERN = Pattern.compile("^\\d{1,3}(\\.\\d{1,3}){3}\\:\\d{1,5}$");
-    private static final Pattern LOCAL_IP_PATTERN = Pattern.compile("127(\\.\\d{1,3}){3}$");
+    private static final Pattern ADDRESS_PATTERN = Pattern.compile("^\\d{1,3}(\\.\\d{1,3}){3}\\:\\d{1,5}$");      // x .x .x .x: x
+    private static final Pattern LOCAL_IP_PATTERN = Pattern.compile("127(\\.\\d{1,3}){3}$");                      // 127 .x .x .x
     private static final Pattern IP_PATTERN = Pattern.compile("\\d{1,3}(\\.\\d{1,3}){3,5}$");
     private static final Map<String, String> hostNameCache = new LRUCache<String, String>(1000);
     private static volatile InetAddress LOCAL_ADDRESS = null;
@@ -106,10 +106,9 @@ public class NetUtils {
         return ADDRESS_PATTERN.matcher(address).matches();
     }
 
+    //是否是一个LocalHost
     public static boolean isLocalHost(String host) {
-        return host != null
-                && (LOCAL_IP_PATTERN.matcher(host).matches()
-                || host.equalsIgnoreCase("localhost"));
+        return host != null && (LOCAL_IP_PATTERN.matcher(host).matches() || host.equalsIgnoreCase("localhost"));
     }
 
     public static boolean isAnyHost(String host) {
@@ -126,10 +125,10 @@ public class NetUtils {
     }
 
     public static InetSocketAddress getLocalSocketAddress(String host, int port) {
-        return isInvalidLocalHost(host) ?
-                new InetSocketAddress(port) : new InetSocketAddress(host, port);
+        return isInvalidLocalHost(host) ? new InetSocketAddress(port) : new InetSocketAddress(host, port);
     }
 
+    //是否是有效的ip地址
     private static boolean isValidAddress(InetAddress address) {
         if (address == null || address.isLoopbackAddress())
             return false;
@@ -177,6 +176,9 @@ public class NetUtils {
         return localAddress;
     }
 
+    //host文件
+    //本地所有网卡
+    //直到找到一个合法的InetAddress
     private static InetAddress getLocalAddress0() {
         InetAddress localAddress = null;
         try {

@@ -109,11 +109,14 @@ public class Exchangers {
         return getExchanger(url).connect(url, handler);
     }
 
+    //根据url的exchanger参数获取Exchanger extension
+    //默认为header
     public static Exchanger getExchanger(URL url) {
         String type = url.getParameter(Constants.EXCHANGER_KEY, Constants.DEFAULT_EXCHANGER);
         return getExchanger(type);
     }
 
+    //获取Exchanger接口name为type的extension
     public static Exchanger getExchanger(String type) {
         return ExtensionLoader.getExtensionLoader(Exchanger.class).getExtension(type);
     }

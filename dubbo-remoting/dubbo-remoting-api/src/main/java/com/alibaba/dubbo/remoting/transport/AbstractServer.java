@@ -47,6 +47,7 @@ public abstract class AbstractServer extends AbstractEndpoint implements Server 
     private int accepts;
     private int idleTimeout = 600; //600 seconds
 
+    //先关初始赋值
     public AbstractServer(URL url, ChannelHandler handler) throws RemotingException {
         super(url, handler);
         localAddress = getUrl().toInetSocketAddress();
@@ -57,6 +58,7 @@ public abstract class AbstractServer extends AbstractEndpoint implements Server 
             bindIp = NetUtils.ANYHOST;
         }
         bindAddress = new InetSocketAddress(bindIp, bindPort);
+
         this.accepts = url.getParameter(Constants.ACCEPTS_KEY, Constants.DEFAULT_ACCEPTS);
         this.idleTimeout = url.getParameter(Constants.IDLE_TIMEOUT_KEY, Constants.DEFAULT_IDLE_TIMEOUT);
         try {
@@ -65,8 +67,7 @@ public abstract class AbstractServer extends AbstractEndpoint implements Server 
                 logger.info("Start " + getClass().getSimpleName() + " bind " + getBindAddress() + ", export " + getLocalAddress());
             }
         } catch (Throwable t) {
-            throw new RemotingException(url.toInetSocketAddress(), null, "Failed to bind " + getClass().getSimpleName()
-                    + " on " + getLocalAddress() + ", cause: " + t.getMessage(), t);
+            throw new RemotingException(url.toInetSocketAddress(), null, "Failed to bind " + getClass().getSimpleName() + " on " + getLocalAddress() + ", cause: " + t.getMessage(), t);
         }
         //fixme replace this with better method
         DataStore dataStore = ExtensionLoader.getExtensionLoader(DataStore.class).getDefaultExtension();
@@ -77,6 +78,7 @@ public abstract class AbstractServer extends AbstractEndpoint implements Server 
 
     protected abstract void doClose() throws Throwable;
 
+    //重新设置相关参数
     @Override
     public void reset(URL url) {
         if (url == null) {
@@ -103,8 +105,7 @@ public abstract class AbstractServer extends AbstractEndpoint implements Server 
             logger.error(t.getMessage(), t);
         }
         try {
-            if (url.hasParameter(Constants.THREADS_KEY)
-                    && executor instanceof ThreadPoolExecutor && !executor.isShutdown()) {
+            if (url.hasParameter(Constants.THREADS_KEY) && executor instanceof ThreadPoolExecutor && !executor.isShutdown()) {
                 ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) executor;
                 int threads = url.getParameter(Constants.THREADS_KEY, 0);
                 int max = threadPoolExecutor.getMaximumPoolSize();

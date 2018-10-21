@@ -34,14 +34,14 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * NettyChannel.
  */
+//封装了一下netty的channel
+//attributes
 final class NettyChannel extends AbstractChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyChannel.class);
-
     private static final ConcurrentMap<org.jboss.netty.channel.Channel, NettyChannel> channelMap = new ConcurrentHashMap<org.jboss.netty.channel.Channel, NettyChannel>();
 
     private final org.jboss.netty.channel.Channel channel;
-
     private final Map<String, Object> attributes = new ConcurrentHashMap<String, Object>();
 
     private NettyChannel(org.jboss.netty.channel.Channel channel, URL url, ChannelHandler handler) {
@@ -98,6 +98,7 @@ final class NettyChannel extends AbstractChannel {
         int timeout = 0;
         try {
             ChannelFuture future = channel.write(message);
+            //最长阻塞时间
             if (sent) {
                 timeout = getUrl().getPositiveParameter(Constants.TIMEOUT_KEY, Constants.DEFAULT_TIMEOUT);
                 success = future.await(timeout);
@@ -111,8 +112,7 @@ final class NettyChannel extends AbstractChannel {
         }
 
         if (!success) {
-            throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress()
-                    + "in timeout(" + timeout + "ms) limit");
+            throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress() + "in timeout(" + timeout + "ms) limit");
         }
     }
 

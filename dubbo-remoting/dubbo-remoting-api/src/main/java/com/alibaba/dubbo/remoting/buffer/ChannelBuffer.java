@@ -52,6 +52,8 @@ import java.nio.ByteBuffer;
  * <p/>
  * <h3>Sequential Access Indexing</h3>
  * <p/>
+ *
+ * concept
  * {@link ChannelBuffer} provides two pointer variables to support sequential
  * read and write operations - {@link #readerIndex() readerIndex} for a read
  * operation and {@link #writerIndex() writerIndex} for a write operation
@@ -201,6 +203,8 @@ import java.nio.ByteBuffer;
  *
  *
  */
+//和jdk的buffer的原理不一样 flip
+//这个是两个index readIndex writeIndex
 public interface ChannelBuffer extends Comparable<ChannelBuffer> {
 
     /**

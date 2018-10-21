@@ -27,6 +27,8 @@ public class NettyTransporter implements Transporter {
 
     public static final String NAME = "netty";
 
+    //名词 动词？
+    //监听本地端口
     @Override
     public Server bind(URL url, ChannelHandler listener) throws RemotingException {
         return new NettyServer(url, listener);

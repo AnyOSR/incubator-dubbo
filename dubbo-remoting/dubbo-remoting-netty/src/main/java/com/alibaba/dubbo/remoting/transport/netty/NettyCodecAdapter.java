@@ -73,8 +73,7 @@ final class NettyCodecAdapter {
 
         @Override
         protected Object encode(ChannelHandlerContext ctx, Channel ch, Object msg) throws Exception {
-            com.alibaba.dubbo.remoting.buffer.ChannelBuffer buffer =
-                    com.alibaba.dubbo.remoting.buffer.ChannelBuffers.dynamicBuffer(1024);
+            com.alibaba.dubbo.remoting.buffer.ChannelBuffer buffer = com.alibaba.dubbo.remoting.buffer.ChannelBuffers.dynamicBuffer(1024);
             NettyChannel channel = NettyChannel.getOrAddChannel(ch, url, handler);
             try {
                 codec.encode(channel, buffer, msg);

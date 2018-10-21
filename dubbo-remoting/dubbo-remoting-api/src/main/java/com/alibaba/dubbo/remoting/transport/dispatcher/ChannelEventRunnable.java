@@ -56,8 +56,7 @@ public class ChannelEventRunnable implements Runnable {
             try {
                 handler.received(channel, message);
             } catch (Exception e) {
-                logger.warn("ChannelEventRunnable handle " + state + " operation error, channel is " + channel
-                        + ", message is " + message, e);
+                logger.warn("ChannelEventRunnable handle " + state + " operation error, channel is " + channel + ", message is " + message, e);
             }
         } else {
             switch (state) {
@@ -79,15 +78,13 @@ public class ChannelEventRunnable implements Runnable {
                 try {
                     handler.sent(channel, message);
                 } catch (Exception e) {
-                    logger.warn("ChannelEventRunnable handle " + state + " operation error, channel is " + channel
-                            + ", message is " + message, e);
+                    logger.warn("ChannelEventRunnable handle " + state + " operation error, channel is " + channel + ", message is " + message, e);
                 }
             case CAUGHT:
                 try {
                     handler.caught(channel, exception);
                 } catch (Exception e) {
-                    logger.warn("ChannelEventRunnable handle " + state + " operation error, channel is " + channel
-                            + ", message is: " + message + ", exception is " + exception, e);
+                    logger.warn("ChannelEventRunnable handle " + state + " operation error, channel is " + channel + ", message is: " + message + ", exception is " + exception, e);
                 }
                 break;
             default:

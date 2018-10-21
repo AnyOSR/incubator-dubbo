@@ -38,6 +38,8 @@ public abstract class AbstractProtocol implements Protocol {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
+    //每一个名字对应的具体实现的所有exporter都存储在这儿
+    //dubbo...
     protected final Map<String, Exporter<?>> exporterMap = new ConcurrentHashMap<String, Exporter<?>>();
 
     //TODO SOFEREFENCE
