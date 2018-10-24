@@ -50,6 +50,7 @@ public abstract class AbstractZookeeperClient<TargetChildListener> implements Zo
         return url;
     }
 
+    //create path
     @Override
     public void create(String path, boolean ephemeral) {
         if (!ephemeral) {
@@ -57,6 +58,7 @@ public abstract class AbstractZookeeperClient<TargetChildListener> implements Zo
                 return;
             }
         }
+        //递归创建，先创建最上层的path
         int i = path.lastIndexOf('/');
         if (i > 0) {
             create(path.substring(0, i), false);
@@ -94,7 +96,7 @@ public abstract class AbstractZookeeperClient<TargetChildListener> implements Zo
             listeners.putIfAbsent(listener, createTargetChildListener(path, listener));
             targetListener = listeners.get(listener);
         }
-        return addTargetChildListener(path, targetListener);
+        return addTargetChildListener(path, targetListener);  //还差个数据结构？或者弄个listener回调
     }
 
     @Override

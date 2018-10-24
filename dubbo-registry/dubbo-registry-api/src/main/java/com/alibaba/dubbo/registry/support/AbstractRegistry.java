@@ -59,6 +59,7 @@ public abstract class AbstractRegistry implements Registry {
     private static final char URL_SEPARATOR = ' ';
     // URL address separated regular expression for parsing the service provider URL list in the file cache
     private static final String URL_SPLIT = "\\s+";
+
     // Log output
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     // Local disk cache, where the special key value.registies records the list of registry centers, and the others are the list of notified service providers
@@ -68,9 +69,12 @@ public abstract class AbstractRegistry implements Registry {
     // Is it synchronized to save the file
     private final boolean syncSaveFile;
     private final AtomicLong lastCacheChanged = new AtomicLong();
+    //exported provider
     private final Set<URL> registered = new ConcurrentHashSet<URL>();
-    private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<URL, Set<NotifyListener>>();
-    private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<URL, Map<String, List<URL>>>();
+    private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<URL, Set<NotifyListener>>();   //subscribed
+
+    //url  category  list<URL> (与前面的url相匹配)
+    private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<URL, Map<String, List<URL>>>();  //notify
     private URL registryUrl;
     // Local disk cache file
     private File file;
@@ -94,6 +98,8 @@ public abstract class AbstractRegistry implements Registry {
         notify(url.getBackupUrls());
     }
 
+    //如果第二个参数为null，则根据第一个参数构建一个List<URL>
+    //否则返回第二个参数
     protected static List<URL> filterEmpty(URL url, List<URL> urls) {
         if (urls == null || urls.isEmpty()) {
             List<URL> result = new ArrayList<URL>(1);
@@ -139,6 +145,8 @@ public abstract class AbstractRegistry implements Registry {
         return lastCacheChanged;
     }
 
+    //保存到本地
+    //将properties写到本地
     public void doSaveProperties(long version) {
         if (version < lastCacheChanged.get()) {
             return;
@@ -190,6 +198,7 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
 
+    //加载properties
     private void loadProperties() {
         if (file != null && file.exists()) {
             InputStream in = null;
@@ -213,13 +222,17 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
 
+    //serviceKey ----list<URL>
+    //properties文件内容
     public List<URL> getCacheUrls(URL url) {
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
             String key = (String) entry.getKey();
             String value = (String) entry.getValue();
+
             if (key != null && key.length() > 0 && key.equals(url.getServiceKey())
                     && (Character.isLetter(key.charAt(0)) || key.charAt(0) == '_')
                     && value != null && value.length() > 0) {
+
                 String[] arr = value.trim().split(URL_SPLIT);
                 List<URL> urls = new ArrayList<URL>();
                 for (String u : arr) {
@@ -235,6 +248,7 @@ public abstract class AbstractRegistry implements Registry {
     public List<URL> lookup(URL url) {
         List<URL> result = new ArrayList<URL>();
         Map<String, List<URL>> notifiedUrls = getNotified().get(url);
+
         if (notifiedUrls != null && notifiedUrls.size() > 0) {
             for (List<URL> urls : notifiedUrls.values()) {
                 for (URL u : urls) {
@@ -251,7 +265,7 @@ public abstract class AbstractRegistry implements Registry {
                     reference.set(urls);
                 }
             };
-            subscribe(url, listener); // Subscribe logic guarantees the first notify to return
+            subscribe(url, listener);                                       // Subscribe logic guarantees the first notify to return
             List<URL> urls = reference.get();
             if (urls != null && !urls.isEmpty()) {
                 for (URL u : urls) {
@@ -286,6 +300,9 @@ public abstract class AbstractRegistry implements Registry {
         registered.remove(url);
     }
 
+    //订阅关系
+    //一个url对应多个listener
+    //订阅只是加了个listener？
     @Override
     public void subscribe(URL url, NotifyListener listener) {
         if (url == null) {
@@ -305,6 +322,7 @@ public abstract class AbstractRegistry implements Registry {
         listeners.add(listener);
     }
 
+    //取消订阅
     @Override
     public void unsubscribe(URL url, NotifyListener listener) {
         if (url == null) {
@@ -348,9 +366,15 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
 
+    //遍历subscribed的数据获取ConcurrentMap<URL, Set<NotifyListener>>
+    //遍历subscribed的当前key(一个url)
+    //如果和urls[0]match
+    //遍历所有当前key的所有NotifyListener
+    //notify(数据放入notified,且调用listener的notify)
     protected void notify(List<URL> urls) {
         if (urls == null || urls.isEmpty()) return;
 
+        //遍历 subscribed
         for (Map.Entry<URL, Set<NotifyListener>> entry : getSubscribed().entrySet()) {
             URL url = entry.getKey();
 
@@ -358,6 +382,7 @@ public abstract class AbstractRegistry implements Registry {
                 continue;
             }
 
+            //当前url对应的listener
             Set<NotifyListener> listeners = entry.getValue();
             if (listeners != null) {
                 for (NotifyListener listener : listeners) {
@@ -371,6 +396,9 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
 
+    // 遍历urls，如果url和urls[i] match
+    // 获取url[i]的category参数 ，以这个为key,组装Map<String, List<URL>>
+    // 并放入notified,然后调用listener的notify方法，参数是放入notified的url
     protected void notify(URL url, NotifyListener listener, List<URL> urls) {
         if (url == null) {
             throw new IllegalArgumentException("notify url == null");
@@ -378,14 +406,15 @@ public abstract class AbstractRegistry implements Registry {
         if (listener == null) {
             throw new IllegalArgumentException("notify listener == null");
         }
-        if ((urls == null || urls.isEmpty())
-                && !Constants.ANY_VALUE.equals(url.getServiceInterface())) {
+        if ((urls == null || urls.isEmpty()) && !Constants.ANY_VALUE.equals(url.getServiceInterface())) {
             logger.warn("Ignore empty notify urls for subscribe url " + url);
             return;
         }
         if (logger.isInfoEnabled()) {
             logger.info("Notify urls for subscribe url " + url + ", urls: " + urls);
         }
+
+        //category ---- list<url>
         Map<String, List<URL>> result = new HashMap<String, List<URL>>();
         for (URL u : urls) {
             if (UrlUtils.isMatch(url, u)) {
@@ -406,6 +435,7 @@ public abstract class AbstractRegistry implements Registry {
             notified.putIfAbsent(url, new ConcurrentHashMap<String, List<URL>>());
             categoryNotified = notified.get(url);
         }
+        //遍历得到的result，放入notified ，并调用listener的notify
         for (Map.Entry<String, List<URL>> entry : result.entrySet()) {
             String category = entry.getKey();
             List<URL> categoryList = entry.getValue();

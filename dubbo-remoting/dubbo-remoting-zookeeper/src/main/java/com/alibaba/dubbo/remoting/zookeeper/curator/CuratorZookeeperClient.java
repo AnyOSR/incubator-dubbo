@@ -52,6 +52,10 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
                 builder = builder.authorization("digest", authority.getBytes());
             }
             client = builder.build();
+
+            //当客户端收到连接状态转变通知时，调用自己的StateListener
+            //通知转换
+            //将Curator的原生通知转换为自己体系的通知
             client.getConnectionStateListenable().addListener(new ConnectionStateListener() {
                 @Override
                 public void stateChanged(CuratorFramework client, ConnectionState state) {
@@ -136,10 +140,11 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
         return new CuratorWatcherImpl(listener);
     }
 
+    //用listener作为path watch的回调
     @Override
     public List<String> addTargetChildListener(String path, CuratorWatcher listener) {
         try {
-            return client.getChildren().usingWatcher(listener).forPath(path);
+            return client.getChildren().usingWatcher(listener).forPath(path);   //Get children and set the given watcher on the node
         } catch (NoNodeException e) {
             return null;
         } catch (Exception e) {
@@ -152,6 +157,11 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
         ((CuratorWatcherImpl) listener).unwatch();
     }
 
+    //listener互相转化
+    //curator 自身listener
+    //当curator注册的listener被调用时，实际上调用的是ChildListener的方法
+    //对于用户来说，接触的只是ChildListener，而不是CuratorWatcher
+    //不管底层的具体watch实现是什么，对外的listener永远都是ChildListener
     private class CuratorWatcherImpl implements CuratorWatcher {
 
         private volatile ChildListener listener;
@@ -164,6 +174,8 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
             this.listener = null;
         }
 
+        //如果listener不为null，每次listen的字节点发生变化时，该process方法会产生拿到被监控的节点以及当前子节点列表，以及设置watch
+        //设置两个入参 以及设置监控
         @Override
         public void process(WatchedEvent event) throws Exception {
             if (listener != null) {
@@ -173,7 +185,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorWatch
                         // if client connect or disconnect to server, zookeeper will queue
                         // watched event(Watcher.Event.EventType.None, .., path = null).
                         StringUtils.isNotEmpty(path)
-                                ? client.getChildren().usingWatcher(this).forPath(path)
+                                ? client.getChildren().usingWatcher(this).forPath(path)  //Get children and set the given watcher on the node.
                                 : Collections.<String>emptyList());
             }
         }

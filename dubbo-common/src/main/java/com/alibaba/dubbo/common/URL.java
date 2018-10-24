@@ -68,7 +68,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @see java.net.URL
  * @see java.net.URI
  */
-//URL是"无状态"的？
+//URL是 final？
+//不能改变this，只能重新赋值
 public final class URL implements Serializable {
 
     private static final long serialVersionUID = -1985165475234910535L;

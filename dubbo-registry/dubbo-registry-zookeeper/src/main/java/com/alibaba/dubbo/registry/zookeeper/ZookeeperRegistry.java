@@ -40,20 +40,22 @@ import java.util.concurrent.ConcurrentMap;
  * ZookeeperRegistry
  *
  */
+//      root/
+//      root/service/
+//      root/service/category
+//      root/service/category/url
+//      对于zkClient来说，ChildListener是其对外表现listener，实际上根据该ChildListener创建了一个zk客户端的自带listener(起到了通知的作用)，但是回调时最后执行的是ChildListener的方法
+//
+//
 public class ZookeeperRegistry extends FailbackRegistry {
 
     private final static Logger logger = LoggerFactory.getLogger(ZookeeperRegistry.class);
-
     private final static int DEFAULT_ZOOKEEPER_PORT = 2181;
-
     private final static String DEFAULT_ROOT = "dubbo";
 
     private final String root;
-
     private final Set<String> anyServices = new ConcurrentHashSet<String>();
-
     private final ConcurrentMap<URL, ConcurrentMap<NotifyListener, ChildListener>> zkListeners = new ConcurrentHashMap<URL, ConcurrentMap<NotifyListener, ChildListener>>();
-
     private final ZookeeperClient zkClient;
 
     public ZookeeperRegistry(URL url, ZookeeperTransporter zookeeperTransporter) {
@@ -65,6 +67,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
         if (!group.startsWith(Constants.PATH_SEPARATOR)) {
             group = Constants.PATH_SEPARATOR + group;
         }
+        //zk 根路径 默认为 /dubbo
         this.root = group;
         zkClient = zookeeperTransporter.connect(url);
         zkClient.addStateListener(new StateListener() {
@@ -108,15 +111,19 @@ public class ZookeeperRegistry extends FailbackRegistry {
         }
     }
 
+    //注册(创建一个路径)
     @Override
     protected void doRegister(URL url) {
         try {
+            //dynamic决定了是临时节点还是永久节点
+            //dynamic为true时临时节点
             zkClient.create(toUrlPath(url), url.getParameter(Constants.DYNAMIC_KEY, true));
         } catch (Throwable e) {
             throw new RpcException("Failed to register " + url + " to zookeeper " + getUrl() + ", cause: " + e.getMessage(), e);
         }
     }
 
+    //注销(删除)
     @Override
     protected void doUnregister(URL url) {
         try {
@@ -126,6 +133,10 @@ public class ZookeeperRegistry extends FailbackRegistry {
         }
     }
 
+    //ChildListener是 client的对外概念
+    //NotifyListener是 Registry的对外概念
+    //订阅
+    //url consumerUrl
     @Override
     protected void doSubscribe(final URL url, final NotifyListener listener) {
         try {
@@ -145,8 +156,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
                                 child = URL.decode(child);
                                 if (!anyServices.contains(child)) {
                                     anyServices.add(child);
-                                    subscribe(url.setPath(child).addParameters(Constants.INTERFACE_KEY, child,
-                                            Constants.CHECK_KEY, String.valueOf(false)), listener);
+                                    subscribe(url.setPath(child).addParameters(Constants.INTERFACE_KEY, child, Constants.CHECK_KEY, String.valueOf(false)), listener);
                                 }
                             }
                         }
@@ -159,11 +169,14 @@ public class ZookeeperRegistry extends FailbackRegistry {
                     for (String service : services) {
                         service = URL.decode(service);
                         anyServices.add(service);
-                        subscribe(url.setPath(service).addParameters(Constants.INTERFACE_KEY, service,
-                                Constants.CHECK_KEY, String.valueOf(false)), listener);
+                        subscribe(url.setPath(service).addParameters(Constants.INTERFACE_KEY, service, Constants.CHECK_KEY, String.valueOf(false)), listener);
                     }
                 }
             } else {
+                //填充zkListeners
+                //创建 toServicePath(url) + Constants.PATH_SEPARATOR + categories[i]
+                //用zkListener监控这些path
+                //最后notify一些合适的url
                 List<URL> urls = new ArrayList<URL>();
                 for (String path : toCategoriesPath(url)) {
                     ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.get(url);
@@ -171,9 +184,13 @@ public class ZookeeperRegistry extends FailbackRegistry {
                         zkListeners.putIfAbsent(url, new ConcurrentHashMap<NotifyListener, ChildListener>());
                         listeners = zkListeners.get(url);
                     }
+
                     ChildListener zkListener = listeners.get(listener);
                     if (zkListener == null) {
                         listeners.putIfAbsent(listener, new ChildListener() {
+
+                            //当前registry为什么要监控这个path？
+                            //以及当前path的子节点都是由谁创建或者删除的？
                             @Override
                             public void childChanged(String parentPath, List<String> currentChilds) {
                                 ZookeeperRegistry.this.notify(url, listener, toUrlsWithEmpty(url, parentPath, currentChilds));
@@ -182,6 +199,8 @@ public class ZookeeperRegistry extends FailbackRegistry {
                         zkListener = listeners.get(listener);
                     }
                     zkClient.create(path, false);
+                    //children provisers
+                    //监控path 设置一个zkListener
                     List<String> children = zkClient.addChildListener(path, zkListener);
                     if (children != null) {
                         urls.addAll(toUrlsWithEmpty(url, path, children));
@@ -231,6 +250,8 @@ public class ZookeeperRegistry extends FailbackRegistry {
         }
     }
 
+    //dubbo root路径
+    //返回String的最后一位是 "/"
     private String toRootDir() {
         if (root.equals(Constants.PATH_SEPARATOR)) {
             return root;
@@ -242,6 +263,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
         return root;
     }
 
+    //返回当前service的根路径
     private String toServicePath(URL url) {
         String name = url.getServiceInterface();
         if (Constants.ANY_VALUE.equals(name)) {
@@ -250,11 +272,12 @@ public class ZookeeperRegistry extends FailbackRegistry {
         return toRootDir() + URL.encode(name);
     }
 
+    //provider consumer router configuration
+    //CategoriesPath
     private String[] toCategoriesPath(URL url) {
         String[] categories;
         if (Constants.ANY_VALUE.equals(url.getParameter(Constants.CATEGORY_KEY))) {
-            categories = new String[]{Constants.PROVIDERS_CATEGORY, Constants.CONSUMERS_CATEGORY,
-                    Constants.ROUTERS_CATEGORY, Constants.CONFIGURATORS_CATEGORY};
+            categories = new String[]{Constants.PROVIDERS_CATEGORY, Constants.CONSUMERS_CATEGORY, Constants.ROUTERS_CATEGORY, Constants.CONFIGURATORS_CATEGORY};
         } else {
             categories = url.getParameter(Constants.CATEGORY_KEY, new String[]{Constants.DEFAULT_CATEGORY});
         }
@@ -265,14 +288,18 @@ public class ZookeeperRegistry extends FailbackRegistry {
         return paths;
     }
 
+    //category provider consumer？
+    //当前category路径  category
     private String toCategoryPath(URL url) {
         return toServicePath(url) + Constants.PATH_SEPARATOR + url.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY);
     }
 
+    //当前provider url路径
     private String toUrlPath(URL url) {
         return toCategoryPath(url) + Constants.PATH_SEPARATOR + URL.encode(url.toFullString());
     }
 
+    //返回和consumer匹配的provider
     private List<URL> toUrlsWithoutEmpty(URL consumer, List<String> providers) {
         List<URL> urls = new ArrayList<URL>();
         if (providers != null && !providers.isEmpty()) {
@@ -289,6 +316,9 @@ public class ZookeeperRegistry extends FailbackRegistry {
         return urls;
     }
 
+    //返回和consumer匹配的provider
+    //没有则根据consumer和path构造一个返回
+    //返回的url，其protocol为empty
     private List<URL> toUrlsWithEmpty(URL consumer, String path, List<String> providers) {
         List<URL> urls = toUrlsWithoutEmpty(consumer, providers);
         if (urls == null || urls.isEmpty()) {

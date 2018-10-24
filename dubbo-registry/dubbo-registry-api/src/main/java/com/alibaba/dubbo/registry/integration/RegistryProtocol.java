@@ -121,8 +121,11 @@ public class RegistryProtocol implements Protocol {
         return overrideListeners;
     }
 
+    //实际去注册
     public void register(URL registryUrl, URL registedProviderUrl) {
+        //获取registry
         Registry registry = registryFactory.getRegistry(registryUrl);
+        //注册providerURL
         registry.register(registedProviderUrl);
     }
 
@@ -131,10 +134,12 @@ public class RegistryProtocol implements Protocol {
         //export invoker
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker);
 
+        //获取registry url
         URL registryUrl = getRegistryUrl(originInvoker);
 
         //registry provider
         final Registry registry = getRegistry(originInvoker);
+        //获取provider url
         final URL registedProviderUrl = getRegistedProviderUrl(originInvoker);
 
         //to judge to delay publish whether or not
@@ -142,6 +147,7 @@ public class RegistryProtocol implements Protocol {
 
         ProviderConsumerRegTable.registerProvider(originInvoker, registryUrl, registedProviderUrl);
 
+        //注册并设置状态
         if (register) {
             register(registryUrl, registedProviderUrl);
             ProviderConsumerRegTable.getProviderWrapper(originInvoker).setReg(true);
@@ -152,6 +158,8 @@ public class RegistryProtocol implements Protocol {
         final URL overrideSubscribeUrl = getSubscribedOverrideUrl(registedProviderUrl);
         final OverrideListener overrideSubscribeListener = new OverrideListener(overrideSubscribeUrl, originInvoker);
         overrideListeners.put(overrideSubscribeUrl, overrideSubscribeListener);
+        //谁会来监控category为configurators的path？自己监控自己？
+        //谁会在这个节点下建立子节点？
         registry.subscribe(overrideSubscribeUrl, overrideSubscribeListener);
         //Ensure that a new exporter instance is returned every time export
         return new DestroyableExporter<T>(exporter, originInvoker, overrideSubscribeUrl, registedProviderUrl);
@@ -165,6 +173,7 @@ public class RegistryProtocol implements Protocol {
             synchronized (bounds) {
                 exporter = (ExporterChangeableWrapper<T>) bounds.get(key);
                 if (exporter == null) {
+                    //以providerURL为基准，监听端口
                     final Invoker<?> invokerDelegete = new InvokerDelegete<T>(originInvoker, getProviderUrl(originInvoker));
                     exporter = new ExporterChangeableWrapper<T>((Exporter<T>) protocol.export(invokerDelegete), originInvoker);
                     bounds.put(key, exporter);
@@ -200,6 +209,7 @@ public class RegistryProtocol implements Protocol {
      */
     private Registry getRegistry(final Invoker<?> originInvoker) {
         URL registryUrl = getRegistryUrl(originInvoker);
+        //初始化registry 以及registry里面的client
         return registryFactory.getRegistry(registryUrl);
     }
 
@@ -233,10 +243,13 @@ public class RegistryProtocol implements Protocol {
         return registedProviderUrl;
     }
 
+    //获取订阅override url
+    //干嘛的
+    // protocol provider
+    // category configurators
+    // check false
     private URL getSubscribedOverrideUrl(URL registedProviderUrl) {
-        return registedProviderUrl.setProtocol(Constants.PROVIDER_PROTOCOL)
-                .addParameters(Constants.CATEGORY_KEY, Constants.CONFIGURATORS_CATEGORY,
-                        Constants.CHECK_KEY, String.valueOf(false));
+        return registedProviderUrl.setProtocol(Constants.PROVIDER_PROTOCOL).addParameters(Constants.CATEGORY_KEY, Constants.CONFIGURATORS_CATEGORY, Constants.CHECK_KEY, String.valueOf(false));
     }
 
     /**
