@@ -365,6 +365,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     //顶层是代理对象
     //invoker = proxyFactory.getInvoker(ref, (Class) interfaceClass, url)
     //Exporter<?> exporter = protocol.export(wrapperInvoker)
+    //协议 注册中心
     private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs) {
         String name = protocolConfig.getName();
         if (name == null || name.length() == 0) {
@@ -470,6 +471,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 map.put(Constants.TOKEN_KEY, token);
             }
         }
+        //如果protocol为injvm，将protocolConfig的register设置为false，notify设置为false
         if (Constants.LOCAL_PROTOCOL.equals(protocolConfig.getName())) {
             protocolConfig.setRegister(false);
             map.put("notify", "false");
@@ -484,6 +486,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         Integer port = this.findConfigedPorts(protocolConfig, name, map);
 
         //provider url
+        //map里面包含时间戳
         URL url = new URL(name, host, port, (contextPath == null || contextPath.length() == 0 ? "" : contextPath + "/") + path, map);
 
         if (ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class).hasExtension(url.getProtocol())) {
@@ -511,11 +514,13 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                         url = url.addParameterIfAbsent(Constants.DYNAMIC_KEY, registryURL.getParameter(Constants.DYNAMIC_KEY));
                         URL monitorUrl = loadMonitor(registryURL);
 
-                        //添加monitor URL
+                        //为providerUrl 添加monitor parameter
                         if (monitorUrl != null) {
                             url = url.addParameterAndEncoded(Constants.MONITOR_KEY, monitorUrl.toFullString());
                         }
                         if (logger.isInfoEnabled()) {
+                            //url为provider url (providerurl包含了当前生产者的信息，例如ip 端口 interface 协议)
+                            //registryURL为registryURL (registry包含了注册中心的信息 注册中心地址 端口号 协议)
                             logger.info("Register dubbo service " + interfaceClass.getName() + " url " + url + " to registry " + registryURL);
                         }
 
@@ -524,7 +529,9 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                         if (StringUtils.isNotEmpty(proxy)) {
                             registryURL = registryURL.addParameter(Constants.PROXY_KEY, proxy);
                         }
-                        //为registryURL增加 export属性
+                        //为registryURL增加 export属性 属性值是providerUrl
+                        //invoker里面的url是 registry的url
+                        //每个dubbo:service都有一个Invoker
                         Invoker<?> invoker = proxyFactory.getInvoker(ref, (Class) interfaceClass, registryURL.addParameterAndEncoded(Constants.EXPORT_KEY, url.toFullString()));
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
@@ -548,7 +555,9 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         if (!Constants.LOCAL_PROTOCOL.equalsIgnoreCase(url.getProtocol())) {
 
             URL local = URL.valueOf(url.toFullString()).setProtocol(Constants.LOCAL_PROTOCOL).setHost(LOCALHOST).setPort(0);
+            //这能干啥？
             ServiceClassHolder.getInstance().pushServiceClass(getServiceClass(ref));
+            //ref被代理的对象 interfaceClass被代理所属的类
             Exporter<?> exporter = protocol.export(proxyFactory.getInvoker(ref, (Class) interfaceClass, local));
             exporters.add(exporter);
             logger.info("Export dubbo service " + interfaceClass.getName() + " to local registry");

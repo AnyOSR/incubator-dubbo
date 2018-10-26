@@ -75,7 +75,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
     private Class<?> interfaceClass;
     // client type
     private String client;
-    // url for peer-to-peer invocation
+    // url for peer-to-peer invocation  p2p调用是啥？
     private String url;
     // method configs
     private List<MethodConfig> methods;
@@ -224,7 +224,9 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
 
         String resolve = System.getProperty(interfaceName);
         String resolveFile = null;
+        //如果系统属性中没有interfaceName对应的属性，尝试从文件中找
         if (resolve == null || resolve.length() == 0) {
+            //解析"dubbo.resolve.file"属性值对应的文件
             resolveFile = System.getProperty("dubbo.resolve.file");
             if (resolveFile == null || resolveFile.length() == 0) {
                 File userResolveFile = new File(new File(System.getProperty("user.home")), "dubbo-resolve.properties");
@@ -251,6 +253,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             }
         }
 
+        //如果找到了resolve的值 填充this.url
         if (resolve != null && resolve.length() > 0) {
             url = resolve;
             if (logger.isWarnEnabled()) {
@@ -298,12 +301,20 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         checkStubAndMock(interfaceClass);
         Map<String, String> map = new HashMap<String, String>();
         Map<Object, Object> attributes = new HashMap<Object, Object>();
+
+        //side:consumer
+        //version 2.0.2
+        //时间戳
+        //pid
         map.put(Constants.SIDE_KEY, Constants.CONSUMER_SIDE);
         map.put(Constants.DUBBO_VERSION_KEY, Version.getProtocolVersion());
         map.put(Constants.TIMESTAMP_KEY, String.valueOf(System.currentTimeMillis()));
         if (ConfigUtils.getPid() > 0) {
             map.put(Constants.PID_KEY, String.valueOf(ConfigUtils.getPid()));
         }
+
+        //如果不是generic
+        //version methods
         if (!isGeneric()) {
             String revision = Version.getVersion(interfaceClass, version);
             if (revision != null && revision.length() > 0) {
@@ -318,11 +329,15 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 map.put("methods", StringUtils.join(new HashSet<String>(Arrays.asList(methods)), ","));
             }
         }
+
+        //给map赋值
         map.put(Constants.INTERFACE_KEY, interfaceName);
         appendParameters(map, application);
         appendParameters(map, module);
         appendParameters(map, consumer, Constants.DEFAULT_KEY);
         appendParameters(map, this);
+
+
         String prefix = StringUtils.getServiceKey(map);
         if (methods != null && !methods.isEmpty()) {
             for (MethodConfig method : methods) {
@@ -334,11 +349,13 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                         map.put(method.getName() + ".retries", "0");
                     }
                 }
+                //填充attributes
                 appendAttributes(attributes, method, prefix + "." + method.getName());
                 checkAndConvertImplicitConfig(method, map, attributes);
             }
         }
 
+        //填充register.ip属性
         String hostToRegistry = ConfigUtils.getSystemProperty(Constants.DUBBO_IP_TO_REGISTRY);
         if (hostToRegistry == null || hostToRegistry.length() == 0) {
             hostToRegistry = NetUtils.getLocalHost();
@@ -359,7 +376,11 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
     private T createProxy(Map<String, String> map) {
         URL tmpUrl = new URL("temp", "localhost", 0, map);
         final boolean isJvmRefer;
+
+        //如果没有设置injvm
         if (isInjvm() == null) {
+            //之前resolve不为null的话，会将url赋值
+            //如果url不为null，则不是本地服务
             if (url != null && url.length() > 0) { // if a url is specified, don't do local reference
                 isJvmRefer = false;
             } else if (InjvmProtocol.getInjvmProtocol().isInjvmRefer(tmpUrl)) {
@@ -372,7 +393,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             isJvmRefer = isInjvm().booleanValue();
         }
 
-        //本地invoker
+        //本地invoker 利用injvmProtocol创建Invoker
         if (isJvmRefer) {
             URL url = new URL(Constants.LOCAL_PROTOCOL, NetUtils.LOCALHOST, 0, interfaceClass.getName()).addParameters(map);
             invoker = refprotocol.refer(interfaceClass, url);
@@ -380,6 +401,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 logger.info("Using injvm service " + interfaceClass.getName());
             }
         } else {
+            //如果url已经被设置
             if (url != null && url.length() > 0) { // user specified URL, could be peer-to-peer address, or register center's address.
                 String[] us = Constants.SEMICOLON_SPLIT_PATTERN.split(url);
                 if (us != null && us.length > 0) {
@@ -390,9 +412,12 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                         if (url.getPath() == null || url.getPath().length() == 0) {
                             url = url.setPath(interfaceName);
                         }
+
+                        //如果是registry协议，增加refer属性，值为this的所有属性(consumer)
                         if (Constants.REGISTRY_PROTOCOL.equals(url.getProtocol())) {
                             urls.add(url.addParameterAndEncoded(Constants.REFER_KEY, StringUtils.toQueryString(map)));
                         } else {
+                            //如果是其它协议，移除provider 以及合并consumer的相关属性？
                             urls.add(ClusterUtils.mergeUrl(url, map));
                         }
                     }
@@ -401,10 +426,13 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 List<URL> us = loadRegistries(false);
                 if (us != null && !us.isEmpty()) {
                     for (URL u : us) {
+                        //根据注册中心url，获得监控中心url
                         URL monitorUrl = loadMonitor(u);
                         if (monitorUrl != null) {
+                            //监控中心中心不为null，则将其赋值给注册中心url的monitor属性
                             map.put(Constants.MONITOR_KEY, URL.encode(monitorUrl.toFullString()));
                         }
+                        //为注册中心url添加refer属性，其值为consumer的所有属性值
                         urls.add(u.addParameterAndEncoded(Constants.REFER_KEY, StringUtils.toQueryString(map)));
                     }
                 }
@@ -413,6 +441,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 }
             }
 
+            //如果只有一个注册中心
             if (urls.size() == 1) {
                 invoker = refprotocol.refer(interfaceClass, urls.get(0));
             } else {

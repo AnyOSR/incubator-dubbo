@@ -374,6 +374,7 @@ public class UrlUtils {
     }
 
     //consumerURL 和providerURL是否匹配
+    //interface category enable
     public static boolean isMatch(URL consumerUrl, URL providerUrl) {
         String consumerInterface = consumerUrl.getServiceInterface();
         String providerInterface = providerUrl.getServiceInterface();

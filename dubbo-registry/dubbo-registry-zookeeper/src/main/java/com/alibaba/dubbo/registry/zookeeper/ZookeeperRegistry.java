@@ -117,6 +117,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
         try {
             //dynamic决定了是临时节点还是永久节点
             //dynamic为true时临时节点
+            //providerUrl
             zkClient.create(toUrlPath(url), url.getParameter(Constants.DYNAMIC_KEY, true));
         } catch (Throwable e) {
             throw new RpcException("Failed to register " + url + " to zookeeper " + getUrl() + ", cause: " + e.getMessage(), e);
@@ -136,7 +137,6 @@ public class ZookeeperRegistry extends FailbackRegistry {
     //ChildListener是 client的对外概念
     //NotifyListener是 Registry的对外概念
     //订阅
-    //url consumerUrl
     @Override
     protected void doSubscribe(final URL url, final NotifyListener listener) {
         try {
@@ -198,14 +198,24 @@ public class ZookeeperRegistry extends FailbackRegistry {
                         });
                         zkListener = listeners.get(listener);
                     }
+                    //
                     zkClient.create(path, false);
-                    //children provisers
-                    //监控path 设置一个zkListener
+
+                    //监控path 设置一个zkListener 并返回当前path的子节点
+                    //这些path下的子节点都是啥？谁去创建和删除的？什么功能？
+
+                    //path 由url中的interface category决定 ||  dubbo根目录 interfaceName category
+                    //provider会监控这个路径
+                    //以及每个相同interface的provider创建时，都会拿到这个path下的所有children，然后notify()自己  （注册中心相同的情况下）
+                    //当这个目录下的子节点变化时，会通知所有interface一样的provider
                     List<String> children = zkClient.addChildListener(path, zkListener);
                     if (children != null) {
                         urls.addAll(toUrlsWithEmpty(url, path, children));
                     }
                 }
+                //其中url是每个provider创建时生成的url，其与注册到registry的registedProviderUrl的差别很小 只是改变了protocol的属性、category check parameter的值
+                //url中包含了provider的信息 除了上面提到的几个（protocol的属性、category check）
+                // url = getSubscribedOverrideUrl(registedProviderUrl);
                 notify(url, listener, urls);
             }
         } catch (Throwable e) {
@@ -264,6 +274,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
     }
 
     //返回当前service的根路径
+    //dubbo所用根路径 + providerUrl的interface
     private String toServicePath(URL url) {
         String name = url.getServiceInterface();
         if (Constants.ANY_VALUE.equals(name)) {
@@ -288,13 +299,13 @@ public class ZookeeperRegistry extends FailbackRegistry {
         return paths;
     }
 
-    //category provider consumer？
     //当前category路径  category
+    //dubbo根路径 proxyInterface category
     private String toCategoryPath(URL url) {
         return toServicePath(url) + Constants.PATH_SEPARATOR + url.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY);
     }
 
-    //当前provider url路径
+    //dubbo根路径 proxyInterface category urlFullString
     private String toUrlPath(URL url) {
         return toCategoryPath(url) + Constants.PATH_SEPARATOR + URL.encode(url.toFullString());
     }

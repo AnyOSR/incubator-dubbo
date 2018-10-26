@@ -34,11 +34,16 @@
     <dubbo:protocol name="dubbo" port="20880" server="netty4">
     </dubbo:protocol>
 
+    <dubbo:monitor address="129.2.36.5"/>
+
     <!-- service implementation, as same as regular local bean -->
-    <bean id="demoService" class="com.alibaba.dubbo.demo.provider.DemoServiceImpl"/>
+    <bean id="demoService1" class="com.alibaba.dubbo.demo.provider.DemoServiceImpl"/>
+    <!--<bean id="demoService2" class="com.alibaba.dubbo.demo.provider.DemoServiceImpl"/>-->
 
     <!-- declare the service interface to be exported -->
-    <dubbo:service interface="com.alibaba.dubbo.demo.DemoService" ref="demoService">
+    <dubbo:service id="service1" interface="com.alibaba.dubbo.demo.DemoService" ref="demoService1">
     </dubbo:service>
 
+    <dubbo:service id="service2" interface="com.alibaba.dubbo.demo.DemoService" ref="demoService1">
+    </dubbo:service>
 </beans>

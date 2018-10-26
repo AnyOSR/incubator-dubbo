@@ -237,6 +237,10 @@ public class DubboProtocol extends AbstractProtocol {
         //将protocol中的exporterMap赋值给exporter中的exporterMap
         //dubboprotocol这个单实例和他产生出来的DubboExporter共享同一个exporterMap
         DubboExporter<T> exporter = new DubboExporter<T>(invoker, key, exporterMap);
+
+        //key 由port version path group 构成
+        //在dubboprotocol中，一个interface通常只会有一个exporter
+        //而在registryprotocol中，每一个registry-protocol对会有一个exporter
         exporterMap.put(key, exporter);
 
         //export an stub service for dispatching event
@@ -265,11 +269,15 @@ public class DubboProtocol extends AbstractProtocol {
         //client can export a service which's only for server to invoke
         boolean isServer = url.getParameter(Constants.IS_SERVER_KEY, true);
         if (isServer) {
+            //ip加端口号
             ExchangeServer server = serverMap.get(key);
             if (server == null) {
                 serverMap.put(key, createServer(url));
             } else {
                 // server supports reset, use together with override
+                //多个service暴露在同一个endpoint
+                //不同的service用同一个ip+端口号
+                //但是不同的service，其exporter不同
                 server.reset(url);
             }
         }

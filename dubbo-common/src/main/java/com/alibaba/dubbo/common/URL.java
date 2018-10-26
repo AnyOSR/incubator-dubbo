@@ -1217,6 +1217,7 @@ public final class URL implements Serializable {
         return new InetSocketAddress(host, port);
     }
 
+    //接口名 group version
     public String getServiceKey() {
         String inf = getServiceInterface();
         if (inf == null) return null;
@@ -1237,6 +1238,7 @@ public final class URL implements Serializable {
         return buildString(true, false, false, true);
     }
 
+    //协议 用户名 密码 ip port ServiceKey
     public String toServiceString() {
         return buildString(true, false, true, true);
     }

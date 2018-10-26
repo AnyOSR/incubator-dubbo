@@ -181,6 +181,8 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                     //填充map
                     appendParameters(map, application);
                     appendParameters(map, config);
+
+                    //将path设置成 RegistryService
                     map.put("path", RegistryService.class.getName());
                     map.put("dubbo", Version.getProtocolVersion());
                     map.put(Constants.TIMESTAMP_KEY, String.valueOf(System.currentTimeMillis()));
@@ -197,10 +199,15 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
 
                     List<URL> urls = UrlUtils.parseURLs(address, map);
                     for (URL url : urls) {
+
+                        //对于每一个url，将他本身的协议加入到parameter
+                        //然后将其协议设置成registry
+                        //其余的provider或者consumer也会这么干嘛？
                         url = url.addParameter(Constants.REGISTRY_KEY, url.getProtocol());
                         url = url.setProtocol(Constants.REGISTRY_PROTOCOL);
-                        //provider register？   provider需要去注册？
-                        //!provider subscribe？  ！provider需要去订阅？
+                        //provider register 不能为false
+                        //consumer subscribe不能为false
+                        //否则不添加
                         //校验有效url
                         if ((provider && url.getParameter(Constants.REGISTER_KEY, true)) ||
                                 (!provider && url.getParameter(Constants.SUBSCRIBE_KEY, true))) {
@@ -262,7 +269,8 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
             return UrlUtils.parseURL(address, map);
 
         //address为空，则protocol不为空
-        // 且monitor的protocol为registry，则设置入参registryURL
+        // 且monitor的protocol为registry，则设置返回 monitorURL的protocol为dubbo 参数protocol为registry
+            //且将monitorURL的refer设置为monitor属性
         } else if (Constants.REGISTRY_PROTOCOL.equals(monitor.getProtocol()) && registryURL != null) {
             return registryURL.setProtocol("dubbo").addParameter(Constants.PROTOCOL_KEY, "registry").addParameterAndEncoded(Constants.REFER_KEY, StringUtils.toQueryString(map));
         }
@@ -300,6 +308,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         }
     }
 
+    //测试local stub mock与interface的兼容性
     protected void checkStubAndMock(Class<?> interfaceClass) {
         if (ConfigUtils.isNotEmpty(local)) {
             Class<?> localClass = ConfigUtils.isDefault(local) ? ReflectUtils.forName(interfaceClass.getName() + "Local") : ReflectUtils.forName(local);

@@ -50,6 +50,7 @@ public class InjvmProtocol extends AbstractProtocol implements Protocol {
         return INSTANCE;
     }
 
+    //从已经export 寻找
     static Exporter<?> getExporter(Map<String, Exporter<?>> map, URL key) {
         Exporter<?> result = null;
 
@@ -68,8 +69,7 @@ public class InjvmProtocol extends AbstractProtocol implements Protocol {
 
         if (result == null) {
             return null;
-        } else if (ProtocolUtils.isGeneric(
-                result.getInvoker().getUrl().getParameter(Constants.GENERIC_KEY))) {
+        } else if (ProtocolUtils.isGeneric(result.getInvoker().getUrl().getParameter(Constants.GENERIC_KEY))) {
             return null;
         } else {
             return result;
@@ -92,6 +92,9 @@ public class InjvmProtocol extends AbstractProtocol implements Protocol {
     }
 
     //根据url判断是否为本地jvm Refer
+    //如果scope已经明确的指定为injvm,则不是jvm Refer
+    //如果scope为local或者injvm参数为true，则为jvm refer
+    //remote generic 则false
     public boolean isInjvmRefer(URL url) {
         final boolean isJvmRefer;
         String scope = url.getParameter(Constants.SCOPE_KEY);

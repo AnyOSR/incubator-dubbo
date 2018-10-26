@@ -119,6 +119,9 @@ public class ProtocolFilterWrapper implements Protocol {
         if (Constants.REGISTRY_PROTOCOL.equals(invoker.getUrl().getProtocol())) {
             return protocol.export(invoker);
         }
+        //不是registry的话，就要加chain，或者listener
+        //难道是因为，这个本地的Invoker才是实际调用时要用的，
+        //而假如protocol为registry，只是为了传递到最底层name所对应的实现，去丰富一下数据结构？？
         return protocol.export(buildInvokerChain(invoker, Constants.SERVICE_FILTER_KEY, Constants.PROVIDER));
     }
 

@@ -158,8 +158,14 @@ public class RegistryProtocol implements Protocol {
         final URL overrideSubscribeUrl = getSubscribedOverrideUrl(registedProviderUrl);
         final OverrideListener overrideSubscribeListener = new OverrideListener(overrideSubscribeUrl, originInvoker);
         overrideListeners.put(overrideSubscribeUrl, overrideSubscribeListener);
-        //谁会来监控category为configurators的path？自己监控自己？
+
+        //监控category为configurators的path？干嘛？
         //谁会在这个节点下建立子节点？
+
+        // overrideSubscribeUrl
+        // protocol provider
+        // category configurators
+        // check false   其余的都是provider的信息
         registry.subscribe(overrideSubscribeUrl, overrideSubscribeListener);
         //Ensure that a new exporter instance is returned every time export
         return new DestroyableExporter<T>(exporter, originInvoker, overrideSubscribeUrl, registedProviderUrl);
@@ -171,11 +177,17 @@ public class RegistryProtocol implements Protocol {
         ExporterChangeableWrapper<T> exporter = (ExporterChangeableWrapper<T>) bounds.get(key);
         if (exporter == null) {
             synchronized (bounds) {
+                //key里面包含时间戳
+                //对于同一个协议
+                //bound里面的信息以providerUrl为基准 相同provider 不同registry
                 exporter = (ExporterChangeableWrapper<T>) bounds.get(key);
                 if (exporter == null) {
                     //以providerURL为基准，监听端口
                     final Invoker<?> invokerDelegete = new InvokerDelegete<T>(originInvoker, getProviderUrl(originInvoker));
                     exporter = new ExporterChangeableWrapper<T>((Exporter<T>) protocol.export(invokerDelegete), originInvoker);
+
+                    //bounds里面的内容是doLocalExport产生的 绑定端口
+                    //每个Invoker都对应自己的exporter
                     bounds.put(key, exporter);
                 }
             }
@@ -197,7 +209,7 @@ public class RegistryProtocol implements Protocol {
             logger.warn(new IllegalStateException("error state, exporter should not be null"));
         } else {
             final Invoker<T> invokerDelegete = new InvokerDelegete<T>(originInvoker, newInvokerUrl);
-            exporter.setExporter(protocol.export(invokerDelegete));
+            exporter.setExporter(protocol.export(invokerDelegete));   //改变exporter
         }
     }
 
@@ -215,6 +227,7 @@ public class RegistryProtocol implements Protocol {
 
     private URL getRegistryUrl(Invoker<?> originInvoker) {
         URL registryUrl = originInvoker.getUrl();
+        //如果protocol为registry，则寻找其真正的registry，对应前面的loadRegistries
         if (Constants.REGISTRY_PROTOCOL.equals(registryUrl.getProtocol())) {
             String protocol = registryUrl.getParameter(Constants.REGISTRY_KEY, Constants.DEFAULT_DIRECTORY);
             registryUrl = registryUrl.setProtocol(protocol).removeParameter(Constants.REGISTRY_KEY);
@@ -278,6 +291,7 @@ public class RegistryProtocol implements Protocol {
      */
     //将originInvoker.parameters["export"]解析成一个URL
     //并remove掉parameters里面的dynamic 和 enabled
+    //registry里面的dynamic属性会影响providerUrl
     //返回
     private String getCacheKey(final Invoker<?> originInvoker) {
         URL providerUrl = getProviderUrl(originInvoker);
@@ -381,8 +395,15 @@ public class RegistryProtocol implements Protocol {
         /**
          * @param urls The list of registered information , is always not empty, The meaning is the same as the return value of {@link com.alibaba.dubbo.registry.RegistryService#lookup(URL)}.
          */
+        //provider启动时会通知自己
+        //子节点变化时会通知所有的所有interface相同的provider
         @Override
         public synchronized void notify(List<URL> urls) {
+
+            //两种通知  1、每个provider启动时会主动通知自己  2、path下子节点变化时会通知所有监控这个path的provider(这些provider的interface一样，即是同一个dubbo:service)
+            //subscribeUrl中的interface category决定了path
+            //相同interface的provider会监控这些path
+            //urls应该是 当前path下的子节点和subscribeUrl match的path    (toUrlsWithEmpty)
             logger.debug("original override urls: " + urls);
             List<URL> matchedUrls = getMatchedUrls(urls, subscribeUrl);
             logger.debug("subscribe url: " + subscribeUrl + ", override urls: " + matchedUrls);
@@ -393,20 +414,23 @@ public class RegistryProtocol implements Protocol {
 
             List<Configurator> configurators = RegistryDirectory.toConfigurators(matchedUrls);
 
+            //在OverrideListener中，originInvoker是之前某一个provider创建时对应的Invoker
             final Invoker<?> invoker;
             if (originInvoker instanceof InvokerDelegete) {
                 invoker = ((InvokerDelegete<?>) originInvoker).getInvoker();
             } else {
                 invoker = originInvoker;
             }
-            //The origin invoker
+            //获取之前的providerUrl(origininvoker的export属性)
             URL originUrl = RegistryProtocol.this.getProviderUrl(invoker);
+
             String key = getCacheKey(originInvoker);
             ExporterChangeableWrapper<?> exporter = bounds.get(key);
             if (exporter == null) {
                 logger.warn(new IllegalStateException("error state, exporter should not be null"));
                 return;
             }
+            //reset(url)？改变exporter的入口在哪儿？
             //The current, may have been merged many times
             URL currentUrl = exporter.getInvoker().getUrl();
             //Merged with this configuration
@@ -422,8 +446,7 @@ public class RegistryProtocol implements Protocol {
             for (URL url : configuratorUrls) {
                 URL overrideUrl = url;
                 // Compatible with the old version
-                if (url.getParameter(Constants.CATEGORY_KEY) == null
-                        && Constants.OVERRIDE_PROTOCOL.equals(url.getProtocol())) {
+                if (url.getParameter(Constants.CATEGORY_KEY) == null && Constants.OVERRIDE_PROTOCOL.equals(url.getProtocol())) {
                     overrideUrl = url.addParameter(Constants.CATEGORY_KEY, Constants.CONFIGURATORS_CATEGORY);
                 }
 

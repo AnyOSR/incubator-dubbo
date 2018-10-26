@@ -32,6 +32,8 @@ public class ClusterUtils {
     }
 
     //根据localMap merge remoteUrl的parameters参数
+    //remote？包含provider信息？
+    //p2p？智联?跳过registry？
     public static URL mergeUrl(URL remoteUrl, Map<String, String> localMap) {
         Map<String, String> map = new HashMap<String, String>();
         Map<String, String> remoteMap = remoteUrl.getParameters();
@@ -41,6 +43,7 @@ public class ClusterUtils {
             map.putAll(remoteMap);
 
             // Remove configurations from provider, some items should be affected by provider.
+            //remoteUrl应该是指provider，包含了provider的信息
             map.remove(Constants.THREAD_NAME_KEY);
             map.remove(Constants.DEFAULT_KEY_PREFIX + Constants.THREAD_NAME_KEY);
 

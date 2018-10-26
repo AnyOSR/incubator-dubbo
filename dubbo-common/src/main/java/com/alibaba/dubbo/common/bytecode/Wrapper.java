@@ -104,6 +104,8 @@ public abstract class Wrapper {
         if (c == Object.class)
             return OBJECT_WRAPPER;
 
+        //对于每一个被代理类，只会有一个wrapper？
+        // 因为是put 不用加锁 默认是javassist
         Wrapper ret = WRAPPER_MAP.get(c);
         if (ret == null) {
             ret = makeWrapper(c);

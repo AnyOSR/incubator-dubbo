@@ -85,6 +85,11 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
         url = url.setPath(RegistryService.class.getName())
                 .addParameter(Constants.INTERFACE_KEY, RegistryService.class.getName())
                 .removeParameters(Constants.EXPORT_KEY, Constants.REFER_KEY);
+        //将path设置成 RegistryService
+        //之前将parameter interface设置成了RegistryService
+
+        //所以key里面不包含 被代理对象proxy的信息
+        //协议 用户名 密码 ip port ServiceKey
         String key = url.toServiceString();
         // Lock the registry access process to ensure a single instance of the registry
         LOCK.lock();

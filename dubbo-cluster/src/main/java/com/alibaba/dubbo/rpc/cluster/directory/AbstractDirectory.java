@@ -76,6 +76,7 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
         if (localRouters != null && !localRouters.isEmpty()) {
             for (Router router : localRouters) {
                 try {
+                    //url为null 或者url的runtime parameter为true
                     if (router.getUrl() == null || router.getUrl().getParameter(Constants.RUNTIME_KEY, false)) {
                         invokers = router.route(invokers, getConsumerUrl(), invocation);
                     }

@@ -34,8 +34,7 @@ import java.util.List;
 public class MockInvokersSelector implements Router {
 
     @Override
-    public <T> List<Invoker<T>> route(final List<Invoker<T>> invokers,
-                                      URL url, final Invocation invocation) throws RpcException {
+    public <T> List<Invoker<T>> route(final List<Invoker<T>> invokers, URL url, final Invocation invocation) throws RpcException {
         if (invocation.getAttachments() == null) {
             return getNormalInvokers(invokers);
         } else {
