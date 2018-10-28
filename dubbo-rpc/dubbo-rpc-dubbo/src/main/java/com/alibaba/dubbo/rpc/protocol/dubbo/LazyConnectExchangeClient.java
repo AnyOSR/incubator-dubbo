@@ -42,15 +42,16 @@ final class LazyConnectExchangeClient implements ExchangeClient {
 
     // when this warning rises from invocation, program probably have bug.
     static final String REQUEST_WITH_WARNING_KEY = "lazyclient_request_with_warning";
-    private final static Logger logger = LoggerFactory.getLogger(LazyConnectExchangeClient.class);
+    private AtomicLong warningcount = new AtomicLong(0);
     protected final boolean requestWithWarning;
+    private final static Logger logger = LoggerFactory.getLogger(LazyConnectExchangeClient.class);
+
     private final URL url;
     private final ExchangeHandler requestHandler;
     private final Lock connectLock = new ReentrantLock();
     // lazy connect, initial state for connection
     private final boolean initialState;
     private volatile ExchangeClient client;
-    private AtomicLong warningcount = new AtomicLong(0);
 
     public LazyConnectExchangeClient(URL url, ExchangeHandler requestHandler) {
         // lazy connect, need set send.reconnect = true, to avoid channel bad status.
@@ -237,8 +238,7 @@ final class LazyConnectExchangeClient implements ExchangeClient {
 
     private void checkClient() {
         if (client == null) {
-            throw new IllegalStateException(
-                    "LazyConnectExchangeClient state error. the client has not be init .url:" + url);
+            throw new IllegalStateException("LazyConnectExchangeClient state error. the client has not be init .url:" + url);
         }
     }
 }

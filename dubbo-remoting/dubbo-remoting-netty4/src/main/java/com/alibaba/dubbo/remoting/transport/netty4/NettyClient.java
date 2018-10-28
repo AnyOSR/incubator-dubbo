@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * NettyClient.
  */
+//netty客户端
 public class NettyClient extends AbstractClient {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyClient.class);

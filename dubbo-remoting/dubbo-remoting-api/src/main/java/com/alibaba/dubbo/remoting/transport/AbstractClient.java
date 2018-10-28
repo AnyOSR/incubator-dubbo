@@ -52,6 +52,7 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
     private static final Logger logger = LoggerFactory.getLogger(AbstractClient.class);
     private static final AtomicInteger CLIENT_THREAD_POOL_ID = new AtomicInteger();
     private static final ScheduledThreadPoolExecutor reconnectExecutorService = new ScheduledThreadPoolExecutor(2, new NamedThreadFactory("DubboClientReconnectTimer", true));
+
     private final Lock connectLock = new ReentrantLock();
     private final boolean send_reconnect;
     private final AtomicInteger reconnect_count = new AtomicInteger(0);
@@ -60,6 +61,7 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
     // reconnect warning period. Reconnect warning interval (log warning after how many times) //for test
     private final int reconnect_warning_period;
     private final long shutdown_timeout;
+
     protected volatile ExecutorService executor;
     private volatile ScheduledFuture<?> reconnectExecutorFuture = null;
     // the last successed connected time
@@ -80,9 +82,7 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
             doOpen();
         } catch (Throwable t) {
             close();
-            throw new RemotingException(url.toInetSocketAddress(), null,
-                    "Failed to start " + getClass().getSimpleName() + " " + NetUtils.getLocalAddress()
-                            + " connect to the server " + getRemoteAddress() + ", cause: " + t.getMessage(), t);
+            throw new RemotingException(url.toInetSocketAddress(), null, "Failed to start " + getClass().getSimpleName() + " " + NetUtils.getLocalAddress() + " connect to the server " + getRemoteAddress() + ", cause: " + t.getMessage(), t);
         }
         try {
             // connect.
@@ -95,20 +95,15 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
                 close();
                 throw t;
             } else {
-                logger.warn("Failed to start " + getClass().getSimpleName() + " " + NetUtils.getLocalAddress()
-                        + " connect to the server " + getRemoteAddress() + " (check == false, ignore and retry later!), cause: " + t.getMessage(), t);
+                logger.warn("Failed to start " + getClass().getSimpleName() + " " + NetUtils.getLocalAddress() + " connect to the server " + getRemoteAddress() + " (check == false, ignore and retry later!), cause: " + t.getMessage(), t);
             }
         } catch (Throwable t) {
             close();
-            throw new RemotingException(url.toInetSocketAddress(), null,
-                    "Failed to start " + getClass().getSimpleName() + " " + NetUtils.getLocalAddress()
-                            + " connect to the server " + getRemoteAddress() + ", cause: " + t.getMessage(), t);
+            throw new RemotingException(url.toInetSocketAddress(), null, "Failed to start " + getClass().getSimpleName() + " " + NetUtils.getLocalAddress() + " connect to the server " + getRemoteAddress() + ", cause: " + t.getMessage(), t);
         }
 
-        executor = (ExecutorService) ExtensionLoader.getExtensionLoader(DataStore.class)
-                .getDefaultExtension().get(Constants.CONSUMER_SIDE, Integer.toString(url.getPort()));
-        ExtensionLoader.getExtensionLoader(DataStore.class)
-                .getDefaultExtension().remove(Constants.CONSUMER_SIDE, Integer.toString(url.getPort()));
+        executor = (ExecutorService) ExtensionLoader.getExtensionLoader(DataStore.class).getDefaultExtension().get(Constants.CONSUMER_SIDE, Integer.toString(url.getPort()));
+        ExtensionLoader.getExtensionLoader(DataStore.class).getDefaultExtension().remove(Constants.CONSUMER_SIDE, Integer.toString(url.getPort()));
     }
 
     protected static ChannelHandler wrapChannelHandler(URL url, ChannelHandler handler) {
@@ -144,6 +139,8 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
     /**
      * init reconnect thread
      */
+    //创建一个任务并提交
+    //如果连接失败会一直连接，并设置相关参数
     private synchronized void initConnectStatusCheckCommand() {
         //reconnect=false to close reconnect
         int reconnect = getReconnectParam(getUrl());

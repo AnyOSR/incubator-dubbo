@@ -33,11 +33,13 @@ import java.util.List;
  */
 public class MockInvokersSelector implements Router {
 
+    //有mock的Invoker则返回mock protocol的Invoker
     @Override
     public <T> List<Invoker<T>> route(final List<Invoker<T>> invokers, URL url, final Invocation invocation) throws RpcException {
         if (invocation.getAttachments() == null) {
             return getNormalInvokers(invokers);
         } else {
+            //invocation.need.mock
             String value = invocation.getAttachments().get(Constants.INVOCATION_NEED_MOCK);
             if (value == null)
                 return getNormalInvokers(invokers);
@@ -48,6 +50,7 @@ public class MockInvokersSelector implements Router {
         return invokers;
     }
 
+    //返回入参invokers中的mock Invoker
     private <T> List<Invoker<T>> getMockedInvokers(final List<Invoker<T>> invokers) {
         if (!hasMockProviders(invokers)) {
             return null;
@@ -61,6 +64,7 @@ public class MockInvokersSelector implements Router {
         return sInvokers;
     }
 
+    //返回入参invokers中的normal Invoker
     private <T> List<Invoker<T>> getNormalInvokers(final List<Invoker<T>> invokers) {
         if (!hasMockProviders(invokers)) {
             return invokers;

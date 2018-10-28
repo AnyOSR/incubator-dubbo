@@ -28,10 +28,8 @@
     <!-- use multicast registry center to discover service -->
     <dubbo:registry address="zookeeper://10.13.92.69:2181"/>
 
-    <dubbo:protocol name="dubbo" server="netty4"></dubbo:protocol>
-
     <!-- generate proxy for the remote service, then demoService can be used in the same way as the
     local regular interface -->
-    <dubbo:reference id="demoService" check="false" interface="com.alibaba.dubbo.demo.DemoService"/>
+    <dubbo:reference id="demoService" check="false" interface="com.alibaba.dubbo.demo.DemoService" client="netty4"/>
 
 </beans>

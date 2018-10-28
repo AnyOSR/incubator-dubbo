@@ -76,6 +76,7 @@ final public class MockInvoker<T> implements Invoker<T> {
         } else {
             value = mock;
         }
+
         if (returnTypes != null && returnTypes.length > 0) {
             value = PojoUtils.realize(value, (Class<?>) returnTypes[0], returnTypes.length > 1 ? returnTypes[1] : null);
         }
@@ -84,10 +85,13 @@ final public class MockInvoker<T> implements Invoker<T> {
 
     @Override
     public Result invoke(Invocation invocation) throws RpcException {
+        //获取method.mock的值
         String mock = getUrl().getParameter(invocation.getMethodName() + "." + Constants.MOCK_KEY);
         if (invocation instanceof RpcInvocation) {
             ((RpcInvocation) invocation).setInvoker(this);
         }
+
+        //mock parameter
         if (StringUtils.isBlank(mock)) {
             mock = getUrl().getParameter(Constants.MOCK_KEY);
         }
@@ -96,21 +100,22 @@ final public class MockInvoker<T> implements Invoker<T> {
             throw new RpcException(new IllegalAccessException("mock can not be null. url :" + url));
         }
         mock = normallizeMock(URL.decode(mock));
-        if (Constants.RETURN_PREFIX.trim().equalsIgnoreCase(mock.trim())) {
+
+        if (Constants.RETURN_PREFIX.trim().equalsIgnoreCase(mock.trim())) {    // return
             RpcResult result = new RpcResult();
             result.setValue(null);
             return result;
-        } else if (mock.startsWith(Constants.RETURN_PREFIX)) {
+        } else if (mock.startsWith(Constants.RETURN_PREFIX)) {                 // return：xx
             mock = mock.substring(Constants.RETURN_PREFIX.length()).trim();
             mock = mock.replace('`', '"');
             try {
-                Type[] returnTypes = RpcUtils.getReturnTypes(invocation);
-                Object value = parseMockValue(mock, returnTypes);
+                Type[] returnTypes = RpcUtils.getReturnTypes(invocation);      //获取invocation 所代表方法的返回类型
+                Object value = parseMockValue(mock, returnTypes);              //构造返回值
                 return new RpcResult(value);
             } catch (Exception ew) {
                 throw new RpcException("mock return invoke error. method :" + invocation.getMethodName() + ", mock:" + mock + ", url: " + url, ew);
             }
-        } else if (mock.startsWith(Constants.THROW_PREFIX)) {
+        } else if (mock.startsWith(Constants.THROW_PREFIX)) {                 //throw xx
             mock = mock.substring(Constants.THROW_PREFIX.length()).trim();
             mock = mock.replace('`', '"');
             if (StringUtils.isBlank(mock)) {
@@ -129,6 +134,7 @@ final public class MockInvoker<T> implements Invoker<T> {
         }
     }
 
+    //构造异常
     private Throwable getThrowable(String throwstr) {
         Throwable throwable = (Throwable) throwables.get(throwstr);
         if (throwable != null) {
@@ -150,12 +156,14 @@ final public class MockInvoker<T> implements Invoker<T> {
         }
     }
 
+    //获取mock proxy
     @SuppressWarnings("unchecked")
     private Invoker<T> getInvoker(String mockService) {
         Invoker<T> invoker = (Invoker<T>) mocks.get(mockService);
         if (invoker != null) {
             return invoker;
         } else {
+            //找到url的基本interface
             Class<T> serviceType = (Class<T>) ReflectUtils.forName(url.getServiceInterface());
             if (ConfigUtils.isDefault(mockService)) {
                 mockService = serviceType.getName() + "Mock";
@@ -190,9 +198,10 @@ final public class MockInvoker<T> implements Invoker<T> {
     private String normallizeMock(String mock) {
         if (mock == null || mock.trim().length() == 0) {
             return mock;
-        } else if (ConfigUtils.isDefault(mock) || "fail".equalsIgnoreCase(mock.trim()) || "force".equalsIgnoreCase(mock.trim())) {
+        } else if (ConfigUtils.isDefault(mock) || "fail".equalsIgnoreCase(mock.trim()) || "force".equalsIgnoreCase(mock.trim())) {  //true default fail force
             mock = url.getServiceInterface() + "Mock";
         }
+        //去掉最前面的fail或者force
         if (mock.startsWith(Constants.FAIL_PREFIX)) {
             mock = mock.substring(Constants.FAIL_PREFIX.length()).trim();
         } else if (mock.startsWith(Constants.FORCE_PREFIX)) {

@@ -1248,6 +1248,8 @@ public final class URL implements Serializable {
         return getServiceInterface();
     }
 
+    //返回param interface的值
+    //没有则返回path的值
     public String getServiceInterface() {
         return getParameter(Constants.INTERFACE_KEY, path);
     }

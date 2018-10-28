@@ -358,6 +358,7 @@ public class DubboProtocol extends AbstractProtocol {
 
     private ExchangeClient[] getClients(URL url) {
         // whether to share connection
+        //是否共享连接
         boolean service_share_connect = false;
         int connections = url.getParameter(Constants.CONNECTIONS_KEY, 0);
         // if not configured, connection is shared, otherwise, one connection for one service
@@ -380,6 +381,7 @@ public class DubboProtocol extends AbstractProtocol {
     /**
      * Get shared connection
      */
+    //一个host：port一个连接
     private ExchangeClient getSharedClient(URL url) {
         String key = url.getAddress();
         ReferenceCountExchangeClient client = referenceClientMap.get(key);
@@ -421,8 +423,7 @@ public class DubboProtocol extends AbstractProtocol {
 
         // BIO is not allowed since it has severe performance issue.
         if (str != null && str.length() > 0 && !ExtensionLoader.getExtensionLoader(Transporter.class).hasExtension(str)) {
-            throw new RpcException("Unsupported client type: " + str + "," +
-                    " supported client type is " + StringUtils.join(ExtensionLoader.getExtensionLoader(Transporter.class).getSupportedExtensions(), " "));
+            throw new RpcException("Unsupported client type: " + str + "," + " supported client type is " + StringUtils.join(ExtensionLoader.getExtensionLoader(Transporter.class).getSupportedExtensions(), " "));
         }
 
         ExchangeClient client;

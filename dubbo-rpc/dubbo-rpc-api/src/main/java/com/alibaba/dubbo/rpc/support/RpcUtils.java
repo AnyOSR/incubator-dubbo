@@ -57,11 +57,10 @@ public class RpcUtils {
         return null;
     }
 
+    //获取invocation 里面method的返回类型
     public static Type[] getReturnTypes(Invocation invocation) {
         try {
-            if (invocation != null && invocation.getInvoker() != null
-                    && invocation.getInvoker().getUrl() != null
-                    && !invocation.getMethodName().startsWith("$")) {
+            if (invocation != null && invocation.getInvoker() != null && invocation.getInvoker().getUrl() != null && !invocation.getMethodName().startsWith("$")) {
                 String service = invocation.getInvoker().getUrl().getServiceInterface();
                 if (service != null && service.length() > 0) {
                     Class<?> cls = ReflectUtils.forName(service);
@@ -89,12 +88,16 @@ public class RpcUtils {
      * @param url
      * @param inv
      */
+    //应该设置invocationID 且inv之前没有设置 且是RpcInvocation
     public static void attachInvocationIdIfAsync(URL url, Invocation inv) {
         if (isAttachInvocationId(url, inv) && getInvocationId(inv) == null && inv instanceof RpcInvocation) {
             ((RpcInvocation) inv).setAttachment(Constants.ID_KEY, String.valueOf(INVOKE_ID.getAndIncrement()));
         }
     }
 
+    //判断是否需要给invocation添加参数"id"
+    //url里面设置了methodName.invocationid.autoattach   invocationid.autoattach   且值为true    高优先级
+    //没有设置，则如果是异步调用
     private static boolean isAttachInvocationId(URL url, Invocation invocation) {
         String value = url.getMethodParameter(invocation.getMethodName(), Constants.AUTO_ATTACH_INVOCATIONID_KEY);
         if (value == null) {

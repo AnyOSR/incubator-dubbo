@@ -32,12 +32,12 @@ public class ClusterUtils {
     }
 
     //根据localMap merge remoteUrl的parameters参数
-    //remote？包含provider信息？
-    //p2p？智联?跳过registry？
+    //删除掉remoteUrl里面的一些参数（threadname threadpool corethreads threads queues alive transporter）
+    //使用remoteUrl里面的一些参数（dubbo version group methods remote.timestamp）
+    //合并一些参数(reference.filter invoker.listener)
     public static URL mergeUrl(URL remoteUrl, Map<String, String> localMap) {
         Map<String, String> map = new HashMap<String, String>();
         Map<String, String> remoteMap = remoteUrl.getParameters();
-
 
         if (remoteMap != null && remoteMap.size() > 0) {
             map.putAll(remoteMap);

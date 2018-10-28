@@ -70,21 +70,23 @@ public class MockClusterInvoker<T> implements Invoker<T> {
         Result result = null;
 
         String value = directory.getUrl().getMethodParameter(invocation.getMethodName(), Constants.MOCK_KEY, Boolean.FALSE.toString()).trim();
+
+        //不mock，直接调用底层Invoker
         if (value.length() == 0 || value.equalsIgnoreCase("false")) {
             //no mock
             result = this.invoker.invoke(invocation);
-        } else if (value.startsWith("force")) {
+        } else if (value.startsWith("force")) {   //值为force，则强制mock
             if (logger.isWarnEnabled()) {
                 logger.info("force-mock: " + invocation.getMethodName() + " force-mock enabled , url : " + directory.getUrl());
             }
             //force:direct mock
             result = doMockInvoke(invocation, null);
-        } else {
+        } else {                             //否则，底层Invoker调用失败后mock
             //fail-mock
             try {
                 result = this.invoker.invoke(invocation);
             } catch (RpcException e) {
-                if (e.isBiz()) {
+                if (e.isBiz()) {    //？？
                     throw e;
                 } else {
                     if (logger.isWarnEnabled()) {
@@ -139,6 +141,8 @@ public class MockClusterInvoker<T> implements Invoker<T> {
      * @param invocation
      * @return
      */
+    //给invocation传入一个invocation.need.mock参数
+    //directory对传入了invocation.need.mock参数的invocation需要特殊处理
     private List<Invoker<T>> selectMockInvoker(Invocation invocation) {
         List<Invoker<T>> invokers = null;
         //TODO generic invoker？
