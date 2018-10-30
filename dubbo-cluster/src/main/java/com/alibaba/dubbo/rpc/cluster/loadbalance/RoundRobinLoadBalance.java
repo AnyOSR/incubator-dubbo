@@ -41,10 +41,13 @@ public class RoundRobinLoadBalance extends AbstractLoadBalance {
     protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation) {
         String key = invokers.get(0).getUrl().getServiceKey() + "." + invocation.getMethodName();
         int length = invokers.size(); // Number of invokers
-        int maxWeight = 0; // The maximum weight
-        int minWeight = Integer.MAX_VALUE; // The minimum weight
+        int maxWeight = 0; // The maximum weight                            //确保最大值 >= 0
+        int minWeight = Integer.MAX_VALUE; // The minimum weight            //确保能取到最小值
         final LinkedHashMap<Invoker<T>, IntegerWrapper> invokerToWeightMap = new LinkedHashMap<Invoker<T>, IntegerWrapper>();
         int weightSum = 0;
+
+        //首先计算所有节点的权重 总权重 最大权重 最小权重
+        //当系统运行时间足够漫长，这些计算结果就不会再变了
         for (int i = 0; i < length; i++) {
             int weight = getWeight(invokers.get(i), invocation);
             maxWeight = Math.max(maxWeight, weight); // Choose the maximum weight
@@ -54,14 +57,20 @@ public class RoundRobinLoadBalance extends AbstractLoadBalance {
                 weightSum += weight;
             }
         }
+
+        //key 为接口版本 +方法名
+        //计算次数  每次+1
         AtomicPositiveInteger sequence = sequences.get(key);
         if (sequence == null) {
             sequences.putIfAbsent(key, new AtomicPositiveInteger());
             sequence = sequences.get(key);
         }
         int currentSequence = sequence.getAndIncrement();
+
         if (maxWeight > 0 && minWeight < maxWeight) {
             int mod = currentSequence % weightSum;
+
+            //权重轮训
             for (int i = 0; i < maxWeight; i++) {
                 for (Map.Entry<Invoker<T>, IntegerWrapper> each : invokerToWeightMap.entrySet()) {
                     final Invoker<T> k = each.getKey();
@@ -70,7 +79,7 @@ public class RoundRobinLoadBalance extends AbstractLoadBalance {
                         return k;
                     }
                     if (v.getValue() > 0) {
-                        v.decrement();
+                        v.decrement();       //可以排除权重过小的invoker，如果没有这句，权重值毫无意义，变为无权重轮循
                         mod--;
                     }
                 }

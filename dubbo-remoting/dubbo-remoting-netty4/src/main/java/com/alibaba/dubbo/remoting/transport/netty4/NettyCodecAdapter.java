@@ -59,8 +59,8 @@ final class NettyCodecAdapter {
         return decoder;
     }
 
-    private class InternalEncoder extends MessageToByteEncoder {
 
+    private class InternalEncoder extends MessageToByteEncoder {
         @Override
         protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
             com.alibaba.dubbo.remoting.buffer.ChannelBuffer buffer = new NettyBackedChannelBuffer(out);
@@ -75,18 +75,12 @@ final class NettyCodecAdapter {
     }
 
     private class InternalDecoder extends ByteToMessageDecoder {
-
         @Override
         protected void decode(ChannelHandlerContext ctx, ByteBuf input, List<Object> out) throws Exception {
-
             ChannelBuffer message = new NettyBackedChannelBuffer(input);
-
             NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
-
             Object msg;
-
             int saveReaderIndex;
-
             try {
                 // decode object.
                 do {

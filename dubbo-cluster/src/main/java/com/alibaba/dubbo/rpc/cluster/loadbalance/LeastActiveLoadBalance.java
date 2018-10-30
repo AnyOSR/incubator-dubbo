@@ -38,9 +38,9 @@ public class LeastActiveLoadBalance extends AbstractLoadBalance {
     @Override
     protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation) {
         int length = invokers.size(); // Number of invokers
-        int leastActive = -1; // The least active value of all invokers
-        int leastCount = 0; // The number of invokers having the same least active value (leastActive)
-        int[] leastIndexs = new int[length]; // The index of invokers having the same least active value (leastActive)
+        int leastActive = -1; // The least active value of all invokers                                                       所有invoker的最小活跃连接数
+        int leastCount = 0; // The number of invokers having the same least active value (leastActive)                        服务提供者中，连接数都是leastActive的个数
+        int[] leastIndexs = new int[length]; // The index of invokers having the same least active value (leastActive)        最小连接数provider下表index
         int totalWeight = 0; // The sum of weights
         int firstWeight = 0; // Initial value, used for comparision
         boolean sameWeight = true; // Every invoker has the same weight value?
@@ -48,6 +48,8 @@ public class LeastActiveLoadBalance extends AbstractLoadBalance {
             Invoker<T> invoker = invokers.get(i);
             int active = RpcStatus.getStatus(invoker.getUrl(), invocation.getMethodName()).getActive(); // Active number
             int weight = invoker.getUrl().getMethodParameter(invocation.getMethodName(), Constants.WEIGHT_KEY, Constants.DEFAULT_WEIGHT); // Weight
+
+            //初始值 或者 比当前最小连接数更小
             if (leastActive == -1 || active < leastActive) { // Restart, when find a invoker having smaller least active value.
                 leastActive = active; // Record the current least active value
                 leastCount = 1; // Reset leastCount, count again based on current leastCount
@@ -59,8 +61,7 @@ public class LeastActiveLoadBalance extends AbstractLoadBalance {
                 leastIndexs[leastCount++] = i; // Record index number of this invoker
                 totalWeight += weight; // Add this invoker's weight to totalWeight.
                 // If every invoker has the same weight?
-                if (sameWeight && i > 0
-                        && weight != firstWeight) {
+                if (sameWeight && i > 0 && weight != firstWeight) {
                     sameWeight = false;
                 }
             }

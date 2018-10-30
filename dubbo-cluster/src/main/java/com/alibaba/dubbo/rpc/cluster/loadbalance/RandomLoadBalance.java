@@ -41,8 +41,7 @@ public class RandomLoadBalance extends AbstractLoadBalance {
         for (int i = 0; i < length; i++) {
             int weight = getWeight(invokers.get(i), invocation);
             totalWeight += weight; // Sum
-            if (sameWeight && i > 0
-                    && weight != getWeight(invokers.get(i - 1), invocation)) {
+            if (sameWeight && i > 0 && weight != getWeight(invokers.get(i - 1), invocation)) {
                 sameWeight = false;
             }
         }
@@ -51,8 +50,8 @@ public class RandomLoadBalance extends AbstractLoadBalance {
             int offset = random.nextInt(totalWeight);
             // Return a invoker based on the random value.
             for (int i = 0; i < length; i++) {
-                offset -= getWeight(invokers.get(i), invocation);
-                if (offset < 0) {
+                offset -= getWeight(invokers.get(i), invocation);   //对于同一个invoker来说，后一次计算的权重值要比前一次计算的权重值要大
+                if (offset < 0) {                                   //所以这里是可达的
                     return invokers.get(i);
                 }
             }

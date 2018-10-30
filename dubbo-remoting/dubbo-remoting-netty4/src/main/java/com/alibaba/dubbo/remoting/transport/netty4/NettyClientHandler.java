@@ -56,8 +56,7 @@ public class NettyClientHandler extends ChannelDuplexHandler {
     }
 
     @Override
-    public void disconnect(ChannelHandlerContext ctx, ChannelPromise future)
-            throws Exception {
+    public void disconnect(ChannelHandlerContext ctx, ChannelPromise future) throws Exception {
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
         try {
             handler.disconnected(channel);
@@ -89,8 +88,7 @@ public class NettyClientHandler extends ChannelDuplexHandler {
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
-            throws Exception {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
         try {
             handler.caught(channel, cause);

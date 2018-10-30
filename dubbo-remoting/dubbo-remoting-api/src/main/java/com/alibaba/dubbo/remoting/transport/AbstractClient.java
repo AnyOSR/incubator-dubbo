@@ -69,15 +69,12 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
 
 
     public AbstractClient(URL url, ChannelHandler handler) throws RemotingException {
+
         super(url, handler);
-
         send_reconnect = url.getParameter(Constants.SEND_RECONNECT_KEY, false);
-
         shutdown_timeout = url.getParameter(Constants.SHUTDOWN_TIMEOUT_KEY, Constants.DEFAULT_SHUTDOWN_TIMEOUT);
-
         // The default reconnection interval is 2s, 1800 means warning interval is 1 hour.
         reconnect_warning_period = url.getParameter("reconnect.waring.period", 1800);
-
         try {
             doOpen();
         } catch (Throwable t) {

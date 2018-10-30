@@ -165,6 +165,12 @@ public abstract class Proxy {
                     Class<?> rt = method.getReturnType();
                     Class<?>[] pts = method.getParameterTypes();
 
+                    //
+                    //      Object[] args = new Object[参数个数];
+                    //      args[0] = ($w) $1 ;
+                    //      args[1] = ($w) $2 ;
+                    //      ......
+                    //      Object ret = handler.invoke(this, methods[ix],args);
                     StringBuilder code = new StringBuilder("Object[] args = new Object[").append(pts.length).append("];");
                     for (int j = 0; j < pts.length; j++)
                         code.append(" args[").append(j).append("] = ($w)$").append(j + 1).append(";");
@@ -183,6 +189,9 @@ public abstract class Proxy {
             // create ProxyInstance class.
             String pcn = pkg + ".proxy" + id;
             ccp.setClassName(pcn);
+
+            // public static java.lang.reflect.Method[] methods;
+            // private InvocationHandler handler;
             ccp.addField("public static java.lang.reflect.Method[] methods;");
             ccp.addField("private " + InvocationHandler.class.getName() + " handler;");
             ccp.addConstructor(Modifier.PUBLIC, new Class<?>[]{InvocationHandler.class}, new Class<?>[0], "handler=$1;");

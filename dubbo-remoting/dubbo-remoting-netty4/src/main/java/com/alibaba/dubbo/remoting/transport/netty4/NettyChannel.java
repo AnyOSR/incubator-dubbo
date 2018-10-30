@@ -38,11 +38,9 @@ import java.util.concurrent.ConcurrentMap;
 final class NettyChannel extends AbstractChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyChannel.class);
-
     private static final ConcurrentMap<Channel, NettyChannel> channelMap = new ConcurrentHashMap<Channel, NettyChannel>();
 
     private final Channel channel;
-
     private final Map<String, Object> attributes = new ConcurrentHashMap<String, Object>();
 
     private NettyChannel(Channel channel, URL url, ChannelHandler handler) {
@@ -63,7 +61,7 @@ final class NettyChannel extends AbstractChannel {
             if (ch.isActive()) {
                 ret = channelMap.putIfAbsent(ch, nettyChannel);
             }
-            if (ret == null) {
+            if (ret == null) {   //添加成功
                 ret = nettyChannel;
             }
         }
@@ -112,8 +110,7 @@ final class NettyChannel extends AbstractChannel {
         }
 
         if (!success) {
-            throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress()
-                    + "in timeout(" + timeout + "ms) limit");
+            throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress() + "in timeout(" + timeout + "ms) limit");
         }
     }
 

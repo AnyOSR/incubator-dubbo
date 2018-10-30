@@ -29,7 +29,6 @@ import com.alibaba.dubbo.remoting.RemotingException;
 public abstract class AbstractPeer implements Endpoint, ChannelHandler {
 
     private final ChannelHandler handler;
-
     private volatile URL url;
 
     // closing closed means the process is being closed and close is finished

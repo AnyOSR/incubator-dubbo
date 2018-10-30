@@ -43,8 +43,8 @@ import java.util.concurrent.TimeUnit;
 public class HeaderExchangeClient implements ExchangeClient {
 
     private static final Logger logger = LoggerFactory.getLogger(HeaderExchangeClient.class);
-
     private static final ScheduledThreadPoolExecutor scheduled = new ScheduledThreadPoolExecutor(2, new NamedThreadFactory("dubbo-remoting-client-heartbeat", true));
+
     private final Client client;
     private final ExchangeChannel channel;
     // heartbeat timer

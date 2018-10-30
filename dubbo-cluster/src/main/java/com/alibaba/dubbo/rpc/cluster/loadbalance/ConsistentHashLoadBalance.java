@@ -63,23 +63,28 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
 
         private final int[] argumentIndex;
 
+        //根据初始数据构造哈希环
         ConsistentHashSelector(List<Invoker<T>> invokers, String methodName, int identityHashCode) {
             this.virtualInvokers = new TreeMap<Long, Invoker<T>>();
             this.identityHashCode = identityHashCode;
             URL url = invokers.get(0).getUrl();
+
+            //hash.nodes
             this.replicaNumber = url.getMethodParameter(methodName, "hash.nodes", 160);
+            //hash.arguments
             String[] index = Constants.COMMA_SPLIT_PATTERN.split(url.getMethodParameter(methodName, "hash.arguments", "0"));
             argumentIndex = new int[index.length];
             for (int i = 0; i < index.length; i++) {
                 argumentIndex[i] = Integer.parseInt(index[i]);
             }
+
             for (Invoker<T> invoker : invokers) {
                 String address = invoker.getUrl().getAddress();
                 for (int i = 0; i < replicaNumber / 4; i++) {
                     byte[] digest = md5(address + i);
-                    for (int h = 0; h < 4; h++) {
+                    for (int h = 0; h < 4; h++) {   //每四位构成一个数，作为key
                         long m = hash(digest, h);
-                        virtualInvokers.put(m, invoker);
+                        virtualInvokers.put(m, invoker);     //将invoker放入环
                     }
                 }
             }
@@ -91,6 +96,9 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
             return selectForKey(hash(digest, 0));
         }
 
+        //根据hash.arguments构造key
+        //入参索引
+        //argumentIndex里面存的是入参索引？
         private String toKey(Object[] args) {
             StringBuilder buf = new StringBuilder();
             for (int i : argumentIndex) {
@@ -102,6 +110,7 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
         }
 
         private Invoker<T> selectForKey(long hash) {
+            //key大于hash的一个视图
             Map.Entry<Long, Invoker<T>> entry = virtualInvokers.tailMap(hash, true).firstEntry();
             if (entry == null) {
                 entry = virtualInvokers.firstEntry();
@@ -109,6 +118,10 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
             return entry.getValue();
         }
 
+
+        //将digest的 4*number ~ 4*number+3 的数组构成一个long数
+        //0 ~ 3
+        //4 ~ 7 ...  12 ~ 15
         private long hash(byte[] digest, int number) {
             return (((long) (digest[3 + number * 4] & 0xFF) << 24)
                     | ((long) (digest[2 + number * 4] & 0xFF) << 16)
@@ -117,6 +130,7 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
                     & 0xFFFFFFFFL;
         }
 
+        //md5摘要 16字节
         private byte[] md5(String value) {
             MessageDigest md5;
             try {

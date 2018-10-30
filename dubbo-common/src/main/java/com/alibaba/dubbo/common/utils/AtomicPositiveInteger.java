@@ -22,11 +22,10 @@ public class AtomicPositiveInteger extends Number {
 
     private static final long serialVersionUID = -3038533876489105940L;
 
-    private static final AtomicIntegerFieldUpdater<AtomicPositiveInteger> indexUpdater =
-            AtomicIntegerFieldUpdater.newUpdater(AtomicPositiveInteger.class, "index");
+    private static final AtomicIntegerFieldUpdater<AtomicPositiveInteger> indexUpdater = AtomicIntegerFieldUpdater.newUpdater(AtomicPositiveInteger.class, "index");
 
     @SuppressWarnings("unused")
-    private volatile int index = 0;
+    private volatile int index = 0;     //默认为0
 
     public AtomicPositiveInteger() {
     }
@@ -36,7 +35,7 @@ public class AtomicPositiveInteger extends Number {
     }
 
     public final int getAndIncrement() {
-        return indexUpdater.getAndIncrement(this) & Integer.MAX_VALUE;
+        return indexUpdater.getAndIncrement(this) & Integer.MAX_VALUE;            //将最高位变0？  到了max_value之后，继续从0开始
     }
 
     public final int getAndDecrement() {
