@@ -47,10 +47,7 @@ public class HeaderExchangeServer implements ExchangeServer {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final ScheduledExecutorService scheduled = Executors.newScheduledThreadPool(1,
-            new NamedThreadFactory(
-                    "dubbo-remoting-server-heartbeat",
-                    true));
+    private final ScheduledExecutorService scheduled = Executors.newScheduledThreadPool(1, new NamedThreadFactory("dubbo-remoting-server-heartbeat", true));
     private final Server server;
     // heartbeat timer
     private ScheduledFuture<?> heartbeatTimer;

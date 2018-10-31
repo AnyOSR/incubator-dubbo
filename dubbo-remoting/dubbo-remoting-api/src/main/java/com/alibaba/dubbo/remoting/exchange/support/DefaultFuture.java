@@ -42,9 +42,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class DefaultFuture implements ResponseFuture {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultFuture.class);
-
     private static final Map<Long, Channel> CHANNELS = new ConcurrentHashMap<Long, Channel>();
-
     private static final Map<Long, DefaultFuture> FUTURES = new ConcurrentHashMap<Long, DefaultFuture>();
 
     static {

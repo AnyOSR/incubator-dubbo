@@ -41,9 +41,7 @@ import java.net.InetSocketAddress;
 public class HeaderExchangeHandler implements ChannelHandlerDelegate {
 
     protected static final Logger logger = LoggerFactory.getLogger(HeaderExchangeHandler.class);
-
     public static String KEY_READ_TIMESTAMP = HeartbeatHandler.KEY_READ_TIMESTAMP;
-
     public static String KEY_WRITE_TIMESTAMP = HeartbeatHandler.KEY_WRITE_TIMESTAMP;
 
     private final ExchangeHandler handler;
