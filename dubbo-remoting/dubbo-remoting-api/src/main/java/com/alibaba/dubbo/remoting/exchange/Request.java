@@ -26,21 +26,14 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Request {
 
     public static final String HEARTBEAT_EVENT = null;
-
     public static final String READONLY_EVENT = "R";
-
     private static final AtomicLong INVOKE_ID = new AtomicLong(0);
 
     private final long mId;
-
     private String mVersion;
-
     private boolean mTwoWay = true;
-
     private boolean mEvent = false;
-
     private boolean mBroken = false;
-
     private Object mData;
 
     public Request() {

@@ -88,6 +88,9 @@ public class DefaultFuture implements ResponseFuture {
         }
     }
 
+    //接受数据
+    //有Netty传过来的
+    //也有自己构造的 同步调用完毕
     public static void received(Channel channel, Response response) {
         try {
             DefaultFuture future = FUTURES.remove(response.getId());
@@ -121,6 +124,7 @@ public class DefaultFuture implements ResponseFuture {
             try {
                 while (!isDone()) {
                     done.await(timeout, TimeUnit.MILLISECONDS);
+                    //如果已经调用结束，或者已经超时
                     if (isDone() || System.currentTimeMillis() - start > timeout) {
                         break;
                     }
@@ -130,6 +134,7 @@ public class DefaultFuture implements ResponseFuture {
             } finally {
                 lock.unlock();
             }
+            //如果还没有完成，则超时
             if (!isDone()) {
                 throw new TimeoutException(sent > 0, channel, getTimeoutMessage(false));
             }
@@ -206,6 +211,7 @@ public class DefaultFuture implements ResponseFuture {
         }
     }
 
+    //对结果进行封装
     private Object returnFromResponse() throws RemotingException {
         Response res = response;
         if (res == null) {
@@ -248,6 +254,8 @@ public class DefaultFuture implements ResponseFuture {
         sent = System.currentTimeMillis();
     }
 
+    //另一个对应的await在同步调用的get操作
+    //DubboInvoker
     private void doReceived(Response res) {
         lock.lock();
         try {
@@ -286,6 +294,7 @@ public class DefaultFuture implements ResponseFuture {
                         if (future == null || future.isDone()) {
                             continue;
                         }
+                        //如果已经超时，创建timeoutResponse并返回，唤醒阻塞在dubboInvoker上的线程
                         if (System.currentTimeMillis() - future.getStartTimestamp() > future.getTimeout()) {
                             // create exception response.
                             Response timeoutResponse = new Response(future.getId());

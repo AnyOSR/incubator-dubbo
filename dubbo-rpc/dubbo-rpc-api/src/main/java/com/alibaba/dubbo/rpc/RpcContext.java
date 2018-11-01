@@ -67,17 +67,13 @@ public class RpcContext {
     private Future<?> future;
 
     private List<URL> urls;
-
     private URL url;
 
     private String methodName;
-
     private Class<?>[] parameterTypes;
-
     private Object[] arguments;
 
     private InetSocketAddress localAddress;
-
     private InetSocketAddress remoteAddress;
     @Deprecated
     private List<Invoker<?>> invokers;

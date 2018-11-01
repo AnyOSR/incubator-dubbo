@@ -81,9 +81,7 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         if (closed) {
             throw new RemotingException(this.getLocalAddress(), null, "Failed to send message " + message + ", cause: The channel " + this + " is closed!");
         }
-        if (message instanceof Request
-                || message instanceof Response
-                || message instanceof String) {
+        if (message instanceof Request || message instanceof Response || message instanceof String) {
             channel.send(message, sent);
         } else {
             Request request = new Request();

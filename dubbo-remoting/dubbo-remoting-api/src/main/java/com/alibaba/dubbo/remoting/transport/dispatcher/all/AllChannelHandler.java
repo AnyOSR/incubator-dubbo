@@ -30,6 +30,7 @@ import com.alibaba.dubbo.remoting.transport.dispatcher.WrappedChannelHandler;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 
+//所有的都分发到线程池，而不用io线程来做业务操作
 public class AllChannelHandler extends WrappedChannelHandler {
 
     public AllChannelHandler(ChannelHandler handler, URL url) {
@@ -56,6 +57,8 @@ public class AllChannelHandler extends WrappedChannelHandler {
         }
     }
 
+    //接受数据
+    //线程dispatch
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
         ExecutorService cexecutor = getExecutorService();
