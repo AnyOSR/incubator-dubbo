@@ -25,7 +25,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * Serialization. (SPI, Singleton, ThreadSafe)
+ * Serialization. (SPI, Singleton, ThreadSafe) 桥接  策略
+ * 产生ObjectOutput和ObjectInput，然后去序列化和反序列化
  */
 @SPI("hessian2")
 public interface Serialization {

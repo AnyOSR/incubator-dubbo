@@ -55,6 +55,8 @@ public class Bytes {
      * @param length new length.
      * @return new byte array.
      */
+    //copy src,copy内容的长度为min(length,src.length)
+    //返回数组的长度是length
     public static byte[] copyOf(byte[] src, int length) {
         byte[] dest = new byte[length];
         System.arraycopy(src, 0, dest, 0, Math.min(src.length, length));
@@ -287,6 +289,7 @@ public class Bytes {
      * @param off offset.
      * @return int.
      */
+    //将byte转换为int 顺序
     public static int bytes2int(byte[] b, int off) {
         return ((b[off + 3] & 0xFF) << 0) +
                 ((b[off + 2] & 0xFF) << 8) +

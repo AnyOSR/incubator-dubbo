@@ -37,6 +37,7 @@ public abstract class AbstractChannelBuffer implements ChannelBuffer {
         return readerIndex;
     }
 
+    // 0 <= readerIndex <= writerIndex <= capacity()
     @Override
     public void readerIndex(int readerIndex) {
         if (readerIndex < 0 || readerIndex > writerIndex) {

@@ -60,16 +60,15 @@ public class CodecSupport {
     }
 
     public static Serialization getSerialization(URL url) {
-        return ExtensionLoader.getExtensionLoader(Serialization.class).getExtension(
-                url.getParameter(Constants.SERIALIZATION_KEY, Constants.DEFAULT_REMOTING_SERIALIZATION));
+        return ExtensionLoader.getExtensionLoader(Serialization.class).getExtension(url.getParameter(Constants.SERIALIZATION_KEY, Constants.DEFAULT_REMOTING_SERIALIZATION));
     }
 
     public static Serialization getSerialization(URL url, Byte id) throws IOException {
         Serialization serialization = getSerializationById(id);
         String serializationName = url.getParameter(Constants.SERIALIZATION_KEY, Constants.DEFAULT_REMOTING_SERIALIZATION);
         // Check if "serialization id" passed from network matches the id on this side(only take effect for JDK serialization), for security purpose.
-        if (serialization == null
-                || ((id == 3 || id == 7 || id == 4) && !(serializationName.equals(ID_SERIALIZATIONNAME_MAP.get(id))))) {
+        if (serialization == null ||
+                ((id == 3 || id == 7 || id == 4) && !(serializationName.equals(ID_SERIALIZATIONNAME_MAP.get(id))))) {
             throw new IOException("Unexpected serialization id:" + id + " received from network, please check if the peer send the right id.");
         }
         return serialization;

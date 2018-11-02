@@ -56,10 +56,10 @@ public class ExchangeCodec extends TelnetCodec {
     protected static final byte MAGIC_HIGH = Bytes.short2bytes(MAGIC)[0];
     protected static final byte MAGIC_LOW = Bytes.short2bytes(MAGIC)[1];
     // message flag.
-    protected static final byte FLAG_REQUEST = (byte) 0x80;
-    protected static final byte FLAG_TWOWAY = (byte) 0x40;
-    protected static final byte FLAG_EVENT = (byte) 0x20;
-    protected static final int SERIALIZATION_MASK = 0x1f;
+    protected static final byte FLAG_REQUEST = (byte) 0x80;      // 1000 0000
+    protected static final byte FLAG_TWOWAY = (byte) 0x40;       // 0100 0000
+    protected static final byte FLAG_EVENT = (byte) 0x20;        // 0010 0000   请求类型
+    protected static final int SERIALIZATION_MASK = 0x1f;        // 0001 1111   最后五位字节为SerializationId 代表不同序列化方式
     private static final Logger logger = LoggerFactory.getLogger(ExchangeCodec.class);
 
     public Short getMagicCode() {
@@ -80,29 +80,38 @@ public class ExchangeCodec extends TelnetCodec {
     @Override
     public Object decode(Channel channel, ChannelBuffer buffer) throws IOException {
         int readable = buffer.readableBytes();
-        byte[] header = new byte[Math.min(readable, HEADER_LENGTH)];
+        byte[] header = new byte[Math.min(readable, HEADER_LENGTH)];   //HEADER_LENGTH 或者 readable
         buffer.readBytes(header);
         return decode(channel, buffer, readable, header);
     }
 
+    //channel 通道
+    //ChannelBuffer 缓冲区
+    //readable buffer原始可读字节数  head.length + buffer.readableBytes() = readable
+    //header 头部
     @Override
     protected Object decode(Channel channel, ChannelBuffer buffer, int readable, byte[] header) throws IOException {
         // check magic number.
-        if (readable > 0 && header[0] != MAGIC_HIGH
-                || readable > 1 && header[1] != MAGIC_LOW) {
+        //检测魔数是否正确
+        if (readable > 0 && header[0] != MAGIC_HIGH || readable > 1 && header[1] != MAGIC_LOW) {
             int length = header.length;
+
+            // header.length < readable，则header的长度是16
+            // 将buffer的内容全部写到header
             if (header.length < readable) {
                 header = Bytes.copyOf(header, readable);
                 buffer.readBytes(header, length, readable - length);
             }
             for (int i = 1; i < header.length - 1; i++) {
-                if (header[i] == MAGIC_HIGH && header[i + 1] == MAGIC_LOW) {
-                    buffer.readerIndex(buffer.readerIndex() - header.length + i);
-                    header = Bytes.copyOf(header, i);
+                if (header[i] == MAGIC_HIGH && header[i + 1] == MAGIC_LOW) {        // i和i+1的字节刚好为魔数
+                    buffer.readerIndex(buffer.readerIndex() - header.length + i);   //  将buffer的readIndex设置到魔数处
+                    header = Bytes.copyOf(header, i);                               //  将魔数之前的字节作为header
                     break;
                 }
             }
-            return super.decode(channel, buffer, readable, header);
+            //魔数不对，调用别的协议解码，telnet
+            //readable未变 变的是buffer.readIndex 和 header.length
+            return super.decode(channel, buffer, readable, header);               // header.length + buffer.readableBytes = readable
         }
         // check length.
         if (readable < HEADER_LENGTH) {
@@ -110,11 +119,13 @@ public class ExchangeCodec extends TelnetCodec {
         }
 
         // get data length.
+        // header最后四位为data长度
         int len = Bytes.bytes2int(header, 12);
         checkPayload(channel, len);
 
+        //总长度 total length
         int tt = len + HEADER_LENGTH;
-        if (readable < tt) {
+        if (readable < tt) {       //刻度字节数小于总长度
             return DecodeResult.NEED_MORE_INPUT;
         }
 
@@ -137,16 +148,19 @@ public class ExchangeCodec extends TelnetCodec {
         }
     }
 
+    //第三个字节为请求类型+序列化方式
+    //第四个字节为status
+    //第五个字节为id
     protected Object decodeBody(Channel channel, InputStream is, byte[] header) throws IOException {
-        byte flag = header[2], proto = (byte) (flag & SERIALIZATION_MASK);
-        Serialization s = CodecSupport.getSerialization(channel.getUrl(), proto);
-        ObjectInput in = s.deserialize(channel.getUrl(), is);
+        byte flag = header[2], proto = (byte) (flag & SERIALIZATION_MASK);                        // 第三个字节为flag
+        Serialization s = CodecSupport.getSerialization(channel.getUrl(), proto);                 // 根据id拿到Serialization实现类
+        ObjectInput in = s.deserialize(channel.getUrl(), is);                                     //得到解码器 ObjectInput
         // get request id.
         long id = Bytes.bytes2long(header, 4);
-        if ((flag & FLAG_REQUEST) == 0) {
+        if ((flag & FLAG_REQUEST) == 0) {                                                         //如果不是request
             // decode response.
             Response res = new Response(id);
-            if ((flag & FLAG_EVENT) != 0) {
+            if ((flag & FLAG_EVENT) != 0) {                                                       // 是不是event
                 res.setEvent(Response.HEARTBEAT_EVENT);
             }
             // get status.

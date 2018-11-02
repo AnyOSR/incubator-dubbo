@@ -96,7 +96,7 @@ import java.nio.ByteBuffer;
  * whose name ends with {@code write} will write the data at the current {@link
  * #writerIndex() writerIndex} and increase it by the number of written bytes.
  * If the argument of the write operation is also a {@link ChannelBuffer}, and
- * no source index is specified, the specified buffer's {@link #readerIndex()
+ * no source index is specified, the specified buffer's {@link #readerIndex()   //这里不是writeIndex？
  * readerIndex} is increased together.
  * <p/>
  * If there's not enough writable bytes left, {@link IndexOutOfBoundsException}

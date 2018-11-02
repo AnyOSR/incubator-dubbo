@@ -86,11 +86,11 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
                 currentClient.send(inv, isSent);
                 RpcContext.getContext().setFuture(null);
                 return new RpcResult();
-            } else if (isAsync) {   //异步
+            } else if (isAsync) {   //异步 调用直接设置future，不调用get
                 ResponseFuture future = currentClient.request(inv, timeout);
                 RpcContext.getContext().setFuture(new FutureAdapter<Object>(future));
                 return new RpcResult();
-            } else {               //同步
+            } else {               //同步调用get会阻塞，直到超时或者set response结束  然后有一个线程一直在扫future，唤醒get阻塞的线程
                 RpcContext.getContext().setFuture(null);
                 return (Result) currentClient.request(inv, timeout).get();
             }

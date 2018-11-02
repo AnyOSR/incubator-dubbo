@@ -69,8 +69,10 @@ public class FutureFilter implements Filter {
     }
 
     private void asyncCallback(final Invoker<?> invoker, final Invocation invocation) {
+        //获取之前设置在threadlocal里面的RpcContext
         Future<?> f = RpcContext.getContext().getFuture();
         if (f instanceof FutureAdapter) {
+            //如果是FutureAdapter，获取之前new的ResponseFuture，并设置callback
             ResponseFuture future = ((FutureAdapter<?>) f).getFuture();
             future.setCallback(new ResponseCallback() {
                 @Override
@@ -124,6 +126,7 @@ public class FutureFilter implements Filter {
         }
     }
 
+    //正常返回回调
     private void fireReturnCallback(final Invoker<?> invoker, final Invocation invocation, final Object result) {
         final Method onReturnMethod = (Method) StaticContext.getSystemContext().get(StaticContext.getKey(invoker.getUrl(), invocation.getMethodName(), Constants.ON_RETURN_METHOD_KEY));
         final Object onReturnInst = StaticContext.getSystemContext().get(StaticContext.getKey(invoker.getUrl(), invocation.getMethodName(), Constants.ON_RETURN_INSTANCE_KEY));
@@ -165,6 +168,7 @@ public class FutureFilter implements Filter {
         }
     }
 
+    //异常回调
     private void fireThrowCallback(final Invoker<?> invoker, final Invocation invocation, final Throwable exception) {
         final Method onthrowMethod = (Method) StaticContext.getSystemContext().get(StaticContext.getKey(invoker.getUrl(), invocation.getMethodName(), Constants.ON_THROW_METHOD_KEY));
         final Object onthrowInst = StaticContext.getSystemContext().get(StaticContext.getKey(invoker.getUrl(), invocation.getMethodName(), Constants.ON_THROW_INSTANCE_KEY));

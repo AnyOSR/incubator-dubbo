@@ -60,12 +60,10 @@ public abstract class AbstractCodec implements Codec2 {
         } else {
             InetSocketAddress address = channel.getRemoteAddress();
             URL url = channel.getUrl();
-            boolean client = url.getPort() == address.getPort()
-                    && NetUtils.filterLocalHost(url.getIp()).equals(
-                    NetUtils.filterLocalHost(address.getAddress()
-                            .getHostAddress()));
-            channel.setAttribute(Constants.SIDE_KEY, client ? "client"
-                    : "server");
+            boolean client =
+                    url.getPort() == address.getPort() &&
+                    NetUtils.filterLocalHost(url.getIp()).equals(NetUtils.filterLocalHost(address.getAddress().getHostAddress()));
+            channel.setAttribute(Constants.SIDE_KEY, client ? "client" : "server");
             return client;
         }
     }

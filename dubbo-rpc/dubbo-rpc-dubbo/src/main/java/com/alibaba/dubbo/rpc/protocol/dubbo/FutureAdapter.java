@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * FutureAdapter
+ * FutureAdapter   适配
  */
 public class FutureAdapter<V> implements Future<V> {
 

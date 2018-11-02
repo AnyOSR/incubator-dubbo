@@ -34,23 +34,17 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * TelnetCodec
+ * TelnetCodec  针对Telnet
  */
 public class TelnetCodec extends TransportCodec {
 
     private static final Logger logger = LoggerFactory.getLogger(TelnetCodec.class);
-
     private static final String HISTORY_LIST_KEY = "telnet.history.list";
-
     private static final String HISTORY_INDEX_KEY = "telnet.history.index";
-
     private static final byte[] UP = new byte[]{27, 91, 65};
-
     private static final byte[] DOWN = new byte[]{27, 91, 66};
-
-    private static final List<?> ENTER = Arrays.asList(new Object[]{new byte[]{'\r', '\n'} /* Windows Enter */, new byte[]{'\n'} /* Linux Enter */});
-
     private static final List<?> EXIT = Arrays.asList(new Object[]{new byte[]{3} /* Windows Ctrl+C */, new byte[]{-1, -12, -1, -3, 6} /* Linux Ctrl+C */, new byte[]{-1, -19, -1, -3, 6} /* Linux Pause */});
+    private static final List<?> ENTER = Arrays.asList(new Object[]{new byte[]{'\r', '\n'} /* Windows Enter */, new byte[]{'\n'} /* Linux Enter */});
 
     private static Charset getCharset(Channel channel) {
         if (channel != null) {
@@ -84,6 +78,7 @@ public class TelnetCodec extends TransportCodec {
         return Charset.defaultCharset();
     }
 
+    //根据实际的input，输出最终的output 字符串
     private static String toString(byte[] message, Charset charset) throws UnsupportedEncodingException {
         byte[] copy = new byte[message.length];
         int index = 0;
@@ -98,7 +93,7 @@ public class TelnetCodec extends TransportCodec {
                         index--;
                     }
                 }
-            } else if (b == 27) { // escape
+            } else if (b == 27) { // escape  ~
                 if (i < message.length - 4 && message[i + 4] == 126) {
                     i = i + 4;
                 } else if (i < message.length - 3 && message[i + 3] == 126) {
@@ -119,10 +114,13 @@ public class TelnetCodec extends TransportCodec {
         return new String(copy, 0, index, charset.name()).trim();
     }
 
+    //message和command内容是否一致
     private static boolean isEquals(byte[] message, byte[] command) throws IOException {
         return message.length == command.length && endsWith(message, command);
     }
 
+    //message的长度 >= command的长度
+    //且 message最后几位和command一样
     private static boolean endsWith(byte[] message, byte[] command) throws IOException {
         if (message.length < command.length) {
             return false;
@@ -136,6 +134,7 @@ public class TelnetCodec extends TransportCodec {
         return true;
     }
 
+    //将message写到buffer
     @Override
     public void encode(Channel channel, ChannelBuffer buffer, Object message) throws IOException {
         if (message instanceof String) {

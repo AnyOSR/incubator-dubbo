@@ -92,25 +92,29 @@ public class FastJsonObjectInput implements ObjectInput {
     }
 
     @Override
-    public <T> T readObject(Class<T> cls) throws IOException, ClassNotFoundException {
-        return read(cls);
-    }
-
-    @Override
     @SuppressWarnings("unchecked")
     public <T> T readObject(Class<T> cls, Type type) throws IOException, ClassNotFoundException {
         Object value = readObject(cls);
         return (T) PojoUtils.realize(value, cls, type);
     }
 
+    @Override
+    public <T> T readObject(Class<T> cls) throws IOException, ClassNotFoundException {
+        return read(cls);
+    }
+
+    //根据BufferedReader里面的内容
+    //一行一行解析
+    //那得每行存一个对象？
+    private <T> T read(Class<T> cls) throws IOException {
+        String json = readLine();
+        return JSON.parseObject(json, cls);
+    }
+
+    //读一行，返回读的内容
     private String readLine() throws IOException, EOFException {
         String line = reader.readLine();
         if (line == null || line.trim().length() == 0) throw new EOFException();
         return line;
-    }
-
-    private <T> T read(Class<T> cls) throws IOException {
-        String json = readLine();
-        return JSON.parseObject(json, cls);
     }
 }

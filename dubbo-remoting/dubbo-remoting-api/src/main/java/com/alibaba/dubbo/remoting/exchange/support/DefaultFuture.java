@@ -155,6 +155,8 @@ public class DefaultFuture implements ResponseFuture {
         return response != null;
     }
 
+    //如果已经完成，直接调用callback
+    //否则设置callback
     @Override
     public void setCallback(ResponseCallback callback) {
         if (isDone()) {
@@ -177,6 +179,7 @@ public class DefaultFuture implements ResponseFuture {
         }
     }
 
+    //回调调用
     private void invokeCallback(ResponseCallback c) {
         ResponseCallback callbackCopy = c;
         if (callbackCopy == null) {
@@ -188,13 +191,14 @@ public class DefaultFuture implements ResponseFuture {
             throw new IllegalStateException("response cannot be null. url:" + channel.getUrl());
         }
 
+        //调用成功
         if (res.getStatus() == Response.OK) {
             try {
                 callbackCopy.done(res.getResult());
             } catch (Exception e) {
                 logger.error("callback invoke error .reasult:" + res.getResult() + ",url:" + channel.getUrl(), e);
             }
-        } else if (res.getStatus() == Response.CLIENT_TIMEOUT || res.getStatus() == Response.SERVER_TIMEOUT) {
+        } else if (res.getStatus() == Response.CLIENT_TIMEOUT || res.getStatus() == Response.SERVER_TIMEOUT) {   //超时
             try {
                 TimeoutException te = new TimeoutException(res.getStatus() == Response.SERVER_TIMEOUT, channel, res.getErrorMessage());
                 callbackCopy.caught(te);
