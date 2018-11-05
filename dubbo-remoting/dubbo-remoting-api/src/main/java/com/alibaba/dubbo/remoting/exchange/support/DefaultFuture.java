@@ -163,7 +163,7 @@ public class DefaultFuture implements ResponseFuture {
     //如果这里没有lock，则设置response和callback的过程可以并发进行
     //会造成，在两个线程判断对方是否存在的那一刻,都认为对方没有设置完成，从而造成不会调用callback(设置callback的线程判断response不存在，设置response的线程认为callback不存在)
     //所以现在这种方式必须要lock
-    //如果不要lock怎么写？
+    //如果不要lock怎么写？都在最后判断？
     @Override
     public void setCallback(ResponseCallback callback) {
         //response和callback的写入都是在lock的保护下写入的
