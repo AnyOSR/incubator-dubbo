@@ -43,8 +43,8 @@ import java.io.InputStream;
 
 /**
  * ExchangeCodec.
- *
- *
+ * encode decode编码的是消息的格式
+ * 序列化和反序列化编解码的是 数据 层次不一样
  *
  */
 public class ExchangeCodec extends TelnetCodec {
@@ -157,10 +157,10 @@ public class ExchangeCodec extends TelnetCodec {
         ObjectInput in = s.deserialize(channel.getUrl(), is);                                     //得到解码器 ObjectInput
         // get request id.
         long id = Bytes.bytes2long(header, 4);
-        if ((flag & FLAG_REQUEST) == 0) {                                                         //如果不是request
+        if ((flag & FLAG_REQUEST) == 0) {                      //如果不是request
             // decode response.
             Response res = new Response(id);
-            if ((flag & FLAG_EVENT) != 0) {                                                       // 是不是event
+            if ((flag & FLAG_EVENT) != 0) {                    // 是不是event
                 res.setEvent(Response.HEARTBEAT_EVENT);
             }
             // get status.
@@ -187,7 +187,7 @@ public class ExchangeCodec extends TelnetCodec {
             return res;
         } else {
             // decode request.
-            Request req = new Request(id);
+            Request req = new Request(id);                     //request
             req.setVersion(Version.getProtocolVersion());
             req.setTwoWay((flag & FLAG_TWOWAY) != 0);
             if ((flag & FLAG_EVENT) != 0) {
@@ -212,6 +212,7 @@ public class ExchangeCodec extends TelnetCodec {
         }
     }
 
+    //拿到之前封装的future
     protected Object getRequestData(long id) {
         DefaultFuture future = DefaultFuture.getFuture(id);
         if (future == null)
@@ -222,28 +223,28 @@ public class ExchangeCodec extends TelnetCodec {
         return req.getData();
     }
 
+    //编码request
     protected void encodeRequest(Channel channel, ChannelBuffer buffer, Request req) throws IOException {
         Serialization serialization = getSerialization(channel);
         // header.
         byte[] header = new byte[HEADER_LENGTH];
         // set magic number.
-        Bytes.short2bytes(MAGIC, header);
+        Bytes.short2bytes(MAGIC, header);                                          //魔数(2)
 
         // set request and serialization flag.
         header[2] = (byte) (FLAG_REQUEST | serialization.getContentTypeId());
-
         if (req.isTwoWay()) header[2] |= FLAG_TWOWAY;
-        if (req.isEvent()) header[2] |= FLAG_EVENT;
+        if (req.isEvent()) header[2] |= FLAG_EVENT;                                //twoway flag+ event flag +请求类型+序列化Id (1)
 
-        // set request id.
-        Bytes.long2bytes(req.getId(), header, 4);
+        // set request id.                                                          //未定义 (1)
+        Bytes.long2bytes(req.getId(), header, 4);                              // id  (8)
 
         // encode request data.
         int savedWriteIndex = buffer.writerIndex();
         buffer.writerIndex(savedWriteIndex + HEADER_LENGTH);
         ChannelBufferOutputStream bos = new ChannelBufferOutputStream(buffer);
         ObjectOutput out = serialization.serialize(channel.getUrl(), bos);
-        if (req.isEvent()) {
+        if (req.isEvent()) {                                                        //编码 data
             encodeEventData(channel, out, req.getData());
         } else {
             encodeRequestData(channel, out, req.getData(), req.getVersion());
@@ -254,16 +255,17 @@ public class ExchangeCodec extends TelnetCodec {
         }
         bos.flush();
         bos.close();
-        int len = bos.writtenBytes();
+        int len = bos.writtenBytes();                                      //写入的data长度
         checkPayload(channel, len);
-        Bytes.int2bytes(len, header, 12);
+        Bytes.int2bytes(len, header, 12);                              //将data长度写入header
 
         // write
         buffer.writerIndex(savedWriteIndex);
-        buffer.writeBytes(header); // write header.
+        buffer.writeBytes(header); // write header.                         //将header写入buffer
         buffer.writerIndex(savedWriteIndex + HEADER_LENGTH + len);
     }
 
+    //编码response
     protected void encodeResponse(Channel channel, ChannelBuffer buffer, Response res) throws IOException {
         int savedWriteIndex = buffer.writerIndex();
         try {
@@ -271,21 +273,21 @@ public class ExchangeCodec extends TelnetCodec {
             // header.
             byte[] header = new byte[HEADER_LENGTH];
             // set magic number.
-            Bytes.short2bytes(MAGIC, header);
+            Bytes.short2bytes(MAGIC, header);                              //魔数 (2)
             // set request and serialization flag.
             header[2] = serialization.getContentTypeId();
-            if (res.isHeartbeat()) header[2] |= FLAG_EVENT;
+            if (res.isHeartbeat()) header[2] |= FLAG_EVENT;                //序列化id event_flag (1)
             // set response status.
             byte status = res.getStatus();
-            header[3] = status;
+            header[3] = status;                                            //status  (1)
             // set request id.
-            Bytes.long2bytes(res.getId(), header, 4);
+            Bytes.long2bytes(res.getId(), header, 4);                  // id (8)
 
             buffer.writerIndex(savedWriteIndex + HEADER_LENGTH);
             ChannelBufferOutputStream bos = new ChannelBufferOutputStream(buffer);
             ObjectOutput out = serialization.serialize(channel.getUrl(), bos);
             // encode response data or error message.
-            if (status == Response.OK) {
+            if (status == Response.OK) {                                    //写入data
                 if (res.isHeartbeat()) {
                     encodeHeartbeatData(channel, out, res.getResult());
                 } else {
@@ -299,16 +301,16 @@ public class ExchangeCodec extends TelnetCodec {
             bos.flush();
             bos.close();
 
-            int len = bos.writtenBytes();
+            int len = bos.writtenBytes();                                    //data 长度
             checkPayload(channel, len);
-            Bytes.int2bytes(len, header, 12);
+            Bytes.int2bytes(len, header, 12);                           //将data长度写入header
             // write
             buffer.writerIndex(savedWriteIndex);
-            buffer.writeBytes(header); // write header.
+            buffer.writeBytes(header); // write header.                      //将header写入buffer
             buffer.writerIndex(savedWriteIndex + HEADER_LENGTH + len);
         } catch (Throwable t) {
             // clear buffer
-            buffer.writerIndex(savedWriteIndex);
+            buffer.writerIndex(savedWriteIndex);                             //恢复writeIndex
             // send error message to Consumer, otherwise, Consumer will wait till timeout.
             if (!res.isEvent() && res.getStatus() != Response.BAD_RESPONSE) {
                 Response r = new Response(res.getId(), res.getVersion());

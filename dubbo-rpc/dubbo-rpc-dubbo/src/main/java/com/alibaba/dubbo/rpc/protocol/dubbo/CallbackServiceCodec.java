@@ -50,6 +50,8 @@ class CallbackServiceCodec {
     private static final byte CALLBACK_DESTROY = 0x2;
     private static final String INV_ATT_CALLBACK_KEY = "sys_callback_arg-";
 
+    //是否存在callback 针对methodName的第argIndex参数？
+    //返回callback类型
     private static byte isCallBack(URL url, String methodName, int argIndex) {
         // parameter callback rule: method-name.parameter-index(starting from 0).callback
         byte isCallback = CALLBACK_NONE;
@@ -249,12 +251,12 @@ class CallbackServiceCodec {
         Object[] args = inv.getArguments();
         Class<?>[] pts = inv.getParameterTypes();
         switch (callbackstatus) {
-            case CallbackServiceCodec.CALLBACK_NONE:
+            case CallbackServiceCodec.CALLBACK_NONE:          //如果是CALLBACK_NONE，直接返回入参
                 return args[paraIndex];
-            case CallbackServiceCodec.CALLBACK_CREATE:
+            case CallbackServiceCodec.CALLBACK_CREATE:        //如果是CALLBACK_CREATE，给inv添加attach
                 inv.setAttachment(INV_ATT_CALLBACK_KEY + paraIndex, exportOrunexportCallbackService(channel, url, pts[paraIndex], args[paraIndex], true));
                 return null;
-            case CallbackServiceCodec.CALLBACK_DESTROY:
+            case CallbackServiceCodec.CALLBACK_DESTROY:       //如果是CALLBACK_DESTROY，
                 inv.setAttachment(INV_ATT_CALLBACK_KEY + paraIndex, exportOrunexportCallbackService(channel, url, pts[paraIndex], args[paraIndex], false));
                 return null;
             default:

@@ -91,6 +91,7 @@ public class DefaultFuture implements ResponseFuture {
     //接受数据
     //有Netty传过来的
     //也有自己构造的 同步调用完毕
+    //received方法有可能调用两次，但是doReceived方法只会被调用一次
     public static void received(Channel channel, Response response) {
         try {
             DefaultFuture future = FUTURES.remove(response.getId());
@@ -157,12 +158,21 @@ public class DefaultFuture implements ResponseFuture {
 
     //如果已经完成，直接调用callback
     //否则设置callback
+    //  threadA---------|设置response.........设置response完成|-------------
+    //  threadB------------------|是否设置callback........是否设置callback完成|---------
+    //如果这里没有lock，则设置response和callback的过程可以并发进行
+    //会造成，在两个线程判断对方是否存在的那一刻,都认为对方没有设置完成，从而造成不会调用callback(设置callback的线程判断response不存在，设置response的线程认为callback不存在)
+    //所以现在这种方式必须要lock
+    //如果不要lock怎么写？
     @Override
     public void setCallback(ResponseCallback callback) {
+        //response和callback的写入都是在lock的保护下写入的
         if (isDone()) {
             invokeCallback(callback);
         } else {
             boolean isdone = false;
+            //只有在response和callback都存在的情况下才会调用callback
+            //关键是对状态的判断 判断时状态不能变化 保护的是状态
             lock.lock();
             try {
                 if (!isDone()) {
@@ -261,7 +271,7 @@ public class DefaultFuture implements ResponseFuture {
     //另一个对应的await在同步调用的get操作
     //DubboInvoker
     private void doReceived(Response res) {
-        lock.lock();
+        lock.lock();   //这个锁是为了线程通知机制，调用signal必须获取锁
         try {
             response = res;
             if (done != null) {
