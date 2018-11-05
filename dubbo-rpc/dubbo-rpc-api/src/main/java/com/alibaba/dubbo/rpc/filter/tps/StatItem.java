@@ -30,24 +30,25 @@ class StatItem {
 
     private int rate;
 
+    //每隔一段时间生成一定数量的token，在这个时间范围内token用完了之后就获取不到token了，限流
     StatItem(String name, int rate, long interval) {
         this.name = name;
         this.rate = rate;
-        this.interval = interval;
+        this.interval = interval;              //控制时间间隔
         this.lastResetTime = System.currentTimeMillis();
-        this.token = new AtomicInteger(rate);
+        this.token = new AtomicInteger(rate);  //控制数量
     }
 
     public boolean isAllowable() {
         long now = System.currentTimeMillis();
-        if (now > lastResetTime + interval) {
+        if (now > lastResetTime + interval) {   //当前时间大于上一次刷新时间和时间间隔 才会去重新set token
             token.set(rate);
             lastResetTime = now;
         }
 
-        int value = token.get();
+        int value = token.get();                //当前的token数量
         boolean flag = false;
-        while (value > 0 && !flag) {
+        while (value > 0 && !flag) {            //尝试获取一个token
             flag = token.compareAndSet(value, value - 1);
             value = token.get();
         }
